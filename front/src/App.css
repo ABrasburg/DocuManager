@@ -1,0 +1,22 @@
+/* App.css */
+.App {
+  min-height: 200vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.App-header {
+  background-color: #282c34; /* Color de fondo oscuro */
+  color: white;
+  padding: 10px 20px; /* Reducimos el padding vertical (arriba/abajo) */
+  min-height: auto; /* Eliminamos altura fija */
+  height: 60px; /* Altura exacta que quieras (puedes ajustar) */
+  display: flex;
+  align-items: center; /* Centra verticalmente el contenido */
+}
+
+.App-content {
+  flex: 1; /* Ocupa todo el espacio restante */
+  padding: 20px;
+  overflow: auto; /* Permite scrolling si el contenido es largo */
+}

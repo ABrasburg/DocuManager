@@ -1,0 +1,36 @@
+[[source]]
+url = "https://pypi.python.org/simple"
+verify_ssl = true
+name = "pypi"
+
+[packages]
+fastapi = "*"
+fernet = "*"
+uvicorn = "*"
+sqlalchemy = "*"
+pytest = "*"
+behave = "*"
+pydantic = "*"
+starlette = "*"
+requests = "*"
+passlib = "*"
+bcrypt = "*"
+python-jose = "*"
+python-multipart = "*"
+jose = "*"
+coverage = "*"
+psycopg2-binary = "*"
+httpx = "*"
+python-dotenv = "*"
+firebase-admin = "*"
+google-api-python-client = "*"
+google-auth-httplib2 = "*"
+google-auth-oauthlib = "*"
+google-auth = "*"
+openpyxl = "*"
+pandas = "*"
+
+[dev-packages]
+
+[requires]
+python_version = "3.12"
