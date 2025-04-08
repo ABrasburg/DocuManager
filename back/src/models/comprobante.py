@@ -21,7 +21,7 @@ class Comprobante(Base):
     total = Column(Float, nullable=False)
 
     emisor_id = Column(Integer, ForeignKey("emisor.id"))
-    emisor = relationship("Emisor", back_populates="comprobantes")
+    emisor = relationship("Emisor", back_populates="comprobantes", lazy='joined')
 
     tipo_comprobante_id = Column(Integer, ForeignKey("tipo_comprobante.id"))
-    tipo_comprobante = relationship("TipoComprobante", back_populates="comprobantes")
+    tipo_comprobante = relationship("TipoComprobante", back_populates="comprobantes", lazy='joined')

@@ -2,8 +2,12 @@ import React, { useState, useEffect } from 'react';
 import { Table, Button, message, Upload, Typography, DatePicker, Space } from 'antd';
 import { UploadOutlined, DeleteOutlined, MoreOutlined, FormOutlined } from "@ant-design/icons";
 import dayjs from 'dayjs';
-
 import '@inovua/reactdatagrid-community/index.css';
+
+import './gestor_comprobantes.css';
+import ExitoPopup from '../Utils/exito_popup';
+import ComprobantePopup from './comprobante';
+import ComprobanteEditPopup from './comprobante_edit';
 
 interface Comprobante {
   id: number;
@@ -36,6 +40,11 @@ const GestorComprobantes: React.FC = () => {
   const [fechaInicioFiltro, setFechaInicioFiltro] = useState<string | null>(null);
   const [fechaFinFiltro, setFechaFinFiltro] = useState<string | null>(null);
 
+  const [comprobante, setComprobante] = useState<Comprobante | null>(null);
+  const [mostrarPopupExito, setMostrarPopupExito] = useState(false);
+  const [mostrarPopupComprobante, setMostrarPopupComprobante] = useState(false);
+  const [mostrarPopupComprobanteEdit, setMostrarPopupComprobanteEdit] = useState(false);
+
   useEffect(() => {
     fetchComprobantes();
   }, []);
@@ -50,11 +59,8 @@ const GestorComprobantes: React.FC = () => {
 
   const fetchComprobantes = async () => {
     try {
-      console.log('Fetching comprobantes');
       const response = await fetch('http://localhost:9000/comprobantes');
-      console.log('Response:', response);
       const data = await response.json();
-      console.log('Data:', data);
       setComprobantes(data || []);
       setEmisores(
         data.reduce((acc: Emisor[], comprobante: Comprobante) => {
@@ -76,6 +82,47 @@ const GestorComprobantes: React.FC = () => {
       console.error("Error fetching:", error);
       setComprobantes([]);
       message.error('Error al cargar comprobantes');
+    }
+  };
+
+  const handleUpload = async (file: File) => {
+    const formData = new FormData();
+    formData.append('file', file);
+    try {
+      const response = await fetch('http://localhost:9000/comprobantes/upload', {
+        method: 'POST',
+        body: formData,
+      });
+      if (response.ok) {
+        setMostrarPopupExito(true);
+        fetchComprobantes();
+      } else {
+        message.error('Error al cargar comprobantes');
+      }
+    } catch (error) {
+      console.error("Error uploading:", error);
+      message.error('Error al cargar comprobantes');
+    }
+  };
+
+  const handleEdit = async (comprobante: Comprobante) => {
+    try {
+      const response = await fetch(`http://localhost:9000/comprobante/${comprobante.id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(comprobante),
+      });
+      if (response.ok) {
+        message.success('Comprobante editado correctamente');
+        fetchComprobantes();
+      } else {
+        message.error('Error al editar comprobante');
+      }
+    } catch (error) {
+      console.error("Error editing:", error);
+      message.error('Error al editar comprobante');
     }
   };
 
@@ -160,7 +207,6 @@ const GestorComprobantes: React.FC = () => {
       render: (_: any, record: Comprobante) => (
         <div>
           <div>{record.emisor?.denominacion || 'N/A'}</div>
-          <div style={{ color: '#888' }}>CUIT: {record.emisor?.cuit || 'N/A'}</div>
         </div>
       ),
       filters: emisores.map((emisor: any) => ({ text: emisor.denominacion, value: emisor.cuit })),
@@ -179,23 +225,59 @@ const GestorComprobantes: React.FC = () => {
           <div>
             <FormOutlined
                 style={{ color: 'green', cursor: 'pointer' }}
-                onClick={() => {
-                    console.log(record);
+                onClick={async () => {
+                    try {
+                      const response = await fetch(`http://localhost:9000/comprobante/${record.id}`);
+                      if (response.ok) {
+                        const data = await response.json();
+                        setComprobante(data);
+                        setMostrarPopupComprobanteEdit(true);
+                      } else {
+                        message.error('Error al cargar comprobante');
+                      }
+                    }
+                    catch (error) {
+                      message.error('Error al cargar comprobante');
+                    }
                 }}
             />
             <DeleteOutlined
-                style={{ color: 'red', cursor: 'pointer', marginLeft: '10px' }}
-                onClick={() => {
-                    console.log('Deleting:', record.id);
-                    fetch(`http://localhost:9000/comprobante/${record.id}`, {
-                        method: 'DELETE',
-                    });
-                    console.log('Deleted:', record.id);
-                    fetchComprobantes();
-                }}
+              style={{ color: 'red', cursor: 'pointer', marginLeft: '10px' }}
+              onClick={async () => {
+                try {
+                  const response = await fetch(`http://localhost:9000/comprobante/${record.id}`, {
+                    method: 'DELETE',
+                  });
+
+                  if (response.ok) {
+                    message.success('Comprobante eliminado');
+                    await fetchComprobantes();
+                  } else {
+                    const errorData = await response.json();
+                    message.error(`Error al eliminar: ${errorData.detail || 'Error desconocido'}`);
+                  }
+                } catch (error) {
+                  message.error('Error al eliminar comprobante');
+                }
+              }}
             />
             <MoreOutlined
                 style={{ color: '#1890ff', cursor: 'pointer', marginLeft: '10px' }}
+                onClick={async () => {
+                    try {
+                      const response = await fetch(`http://localhost:9000/comprobante/${record.id}`);
+                      if (response.ok) {
+                        const data = await response.json();
+                        setComprobante(data);
+                        setMostrarPopupComprobante(true);
+                      } else {
+                        message.error('Error al cargar comprobante');
+                      }
+                    }
+                    catch (error) {
+                      message.error('Error al cargar comprobante');
+                    }
+                }}
             />
           </div>
         ),
@@ -210,15 +292,38 @@ const GestorComprobantes: React.FC = () => {
         </Typography.Title>
         
         <Upload
-          name="file"
-          action="http://localhost:9000/comprobantes/upload"
+          accept=".csv"
           showUploadList={false}
+          beforeUpload={(file) => {
+            handleUpload(file);
+            return false;
+          }}
+          maxCount={1}
+          style={{ marginBottom: '20px' }}
         >
-          <Button type="primary" icon={<UploadOutlined />}>Cargar Comprobantes</Button>
+          <Button icon={<UploadOutlined />} type="primary">
+            Cargar Comprobante
+          </Button>
         </Upload>
         
         <Table<Comprobante> columns={columns} dataSource={comprobantes} size="middle"/>
       </div>
+      <ExitoPopup
+        open={mostrarPopupExito}
+        onClose={() => setMostrarPopupExito(false)}
+        texto="Comprobantes cargados correctamente"
+      />
+      <ComprobantePopup
+        comprobante={comprobante}
+        open={mostrarPopupComprobante}
+        onClose={() => setMostrarPopupComprobante(false)}
+      />
+      <ComprobanteEditPopup
+        comprobante={comprobante}
+        open={mostrarPopupComprobanteEdit}
+        onClose={() => setMostrarPopupComprobanteEdit(false)}
+        handleSave={handleEdit}
+      />
     </div>
   );
 };

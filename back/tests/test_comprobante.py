@@ -3,7 +3,6 @@ import os
 import sys
 
 sys.path.append(os.getcwd())
-print(sys.path)
 from main import app
 
 from db import Base, engine, SessionLocal

@@ -48,6 +48,32 @@ def create_comprobante(
 def delete_comprobante(id: int, db: Session = Depends(get_db)):
     return repo.ComprobanteRepo(db).delete_comprobante(id)
 
+@comprobante.put("/comprobante/{id}", response_model=schemas.Comprobante)
+def update_comprobante(
+    id: int, comprobante: schemas.ComprobanteCreate, db: Session = Depends(get_db)
+):
+    tipo_repo = TipoComprobanteRepo(db)
+    db_tipo = tipo_repo.get_tipo_comprobante(
+        comprobante.tipo_comprobante.tipo_comprobante
+    )
+    if not db_tipo:
+        # Si no existe el tipo de comprobante no creo nada
+        raise HTTPException(status_code=404, detail="Tipo de comprobante no encontrado")
+
+    emisor_repo = EmisorRepo(db)
+    db_emisor = emisor_repo.get_emisor(comprobante.emisor.cuit)
+    if not db_emisor:
+        db_emisor = emisor_repo.create_emisor(comprobante.emisor)
+
+    comprobante_data = comprobante.model_dump()
+    comprobante_data["emisor_id"] = db_emisor.id
+    comprobante_data["tipo_comprobante_id"] = db_tipo.id
+
+    comprobante_data.pop("emisor", None)
+    comprobante_data.pop("tipo_comprobante", None)
+
+    return repo.ComprobanteRepo(db).update_comprobante(id, comprobante_data)
+
 
 @comprobante.get("/comprobante/{id}", response_model=schemas.Comprobante)
 def get_comprobante(id: int, db: Session = Depends(get_db)):

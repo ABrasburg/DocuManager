@@ -1,0 +1,11 @@
+/* Reduce la altura de las filas de la tabla */
+.ant-table-tbody > tr > td {
+    padding: 4px 8px; /* Reduce el padding vertical y horizontal */
+    line-height: 1.2; /* Ajusta la altura de línea para hacer las filas más compactas */
+  }
+  
+  /* Opcional: Reduce la altura del encabezado de la tabla */
+  .ant-table-thead > tr > th {
+    padding: 4px 8px; /* Reduce el padding del encabezado */
+    line-height: 1.2;
+  }
