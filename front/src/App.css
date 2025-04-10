@@ -6,7 +6,7 @@
 }
 
 .App-header {
-  background-color: #282c34; /* Color de fondo oscuro */
+  background-color: #f5f5dc; /* Color de fondo crema */
   color: white;
   padding: 10px 20px; /* Reducimos el padding vertical (arriba/abajo) */
   min-height: auto; /* Eliminamos altura fija */

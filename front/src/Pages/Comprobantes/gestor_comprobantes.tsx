@@ -6,8 +6,9 @@ import '@inovua/reactdatagrid-community/index.css';
 
 import './gestor_comprobantes.css';
 import ExitoPopup from '../Utils/exito_popup';
-import ComprobantePopup from './comprobante';
-import ComprobanteEditPopup from './comprobante_edit';
+import ComprobantePopup from './Popup/comprobante';
+import ComprobanteEditPopup from './Popup/comprobante_edit';
+import SumaPopup from './Popup/obtener_suma';
 
 interface Comprobante {
   id: number;
@@ -44,6 +45,7 @@ const GestorComprobantes: React.FC = () => {
   const [mostrarPopupExito, setMostrarPopupExito] = useState(false);
   const [mostrarPopupComprobante, setMostrarPopupComprobante] = useState(false);
   const [mostrarPopupComprobanteEdit, setMostrarPopupComprobanteEdit] = useState(false);
+  const [mostrarPopupSuma, setMostrarPopupSuma] = useState(false);
 
   useEffect(() => {
     fetchComprobantes();
@@ -291,20 +293,27 @@ const GestorComprobantes: React.FC = () => {
           Gestión de Comprobantes
         </Typography.Title>
         
-        <Upload
-          accept=".csv"
-          showUploadList={false}
-          beforeUpload={(file) => {
-            handleUpload(file);
-            return false;
-          }}
-          maxCount={1}
-          style={{ marginBottom: '20px' }}
-        >
-          <Button icon={<UploadOutlined />} type="primary">
-            Cargar Comprobante
+        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '20px' }}>
+          <Upload
+            accept=".csv"
+            showUploadList={false}
+            beforeUpload={(file) => {
+              handleUpload(file);
+              return false;
+            }}
+            maxCount={1}
+          >
+            <Button icon={<UploadOutlined />} type="primary">
+              Cargar Comprobante
+            </Button>
+          </Upload>
+          <Button
+            type="primary"
+            onClick={() => setMostrarPopupSuma(true)}
+          >
+            Obtener Suma
           </Button>
-        </Upload>
+        </div>
         
         <Table<Comprobante> columns={columns} dataSource={comprobantes} size="middle"/>
       </div>
@@ -324,6 +333,10 @@ const GestorComprobantes: React.FC = () => {
         onClose={() => setMostrarPopupComprobanteEdit(false)}
         handleSave={handleEdit}
       />
+      <SumaPopup
+        open={mostrarPopupSuma}
+        onClose={() => setMostrarPopupSuma(false)}
+        />
     </div>
   );
 };
