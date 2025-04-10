@@ -65,6 +65,27 @@ def test_get_comprobantes_con_nuevo_tipo():
     response = client.post("/comprobante", json=test_comprobante)
     assert response.status_code == 404
 
+def test_get_suma_comprobantes():
+    json_data = {
+        "fecha_inicio": "2023-01-01",
+        "fecha_fin": "2023-12-31",
+        "cuit": 20123456789,
+    }
+    response = client.get("/comprobantes/sumar", params=json_data)
+    print(response.json())
+    assert response.status_code == 200
+    assert response.json() == {
+        "cuit": 20123456789,
+        "fecha_inicio": "2023-01-01",
+        "fecha_fin": "2023-12-31",
+        "neto_gravado": 1000.0,
+        "neto_no_gravado": 0.0,
+        "exento": 0.0,
+        "otros_tributos": 0.0,
+        "iva": 210.0,
+        "total": 1210.0
+    }
+
 def test_borrar_comprobante():
     response = client.delete("/comprobante/1")
     assert response.status_code == 200

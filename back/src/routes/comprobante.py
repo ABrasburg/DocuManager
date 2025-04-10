@@ -106,17 +106,65 @@ def get_comprobantes_by_fechas(
     return repo.ComprobanteRepo(db).get_comprobantes_by_fechas(fecha_inicio, fecha_fin)
 
 
-@comprobante.get("/comprobantes/filtering", response_model=List[schemas.Comprobante])
-def get_comprobante_filtering(
+@comprobante.get("/comprobantes/sumar")
+def get_comprobantes_sumar(
     cuit: int,
-    tipo_comprobante: int,
     fecha_inicio: str,
     fecha_fin: str,
     db: Session = Depends(get_db),
 ):
-    return repo.ComprobanteRepo(db).get_comprobante_filtering(
-        cuit, tipo_comprobante, fecha_inicio, fecha_fin
+    """
+    Sumar los comprobantes filtrados por cuit, tipo de comprobante y fechas
+    Si son Factura los suma si son Notas de credito lo resta
+    """
+    emisor = EmisorRepo(db).get_emisor_by_cuit(cuit)
+    if not emisor:
+        raise HTTPException(status_code=404, detail="Emisor no encontrado")
+    comprobantes = repo.ComprobanteRepo(db).get_comprobantes_by_emisor_and_fechas(
+        emisor.id, fecha_inicio, fecha_fin
     )
+    tipos_comprobante = TipoComprobanteRepo(db).get_tipos_comprobantes()
+    if not tipos_comprobante:
+        raise HTTPException(status_code=404, detail="Tipo de comprobante no encontrado")
+    id_factura = 0
+    id_nota_credito = 0
+    for tipo in tipos_comprobante:
+        if tipo.nombre == "Factura":
+            id_factura = tipo.id
+        if tipo.nombre == "Nota de Crédito":
+            id_nota_credito = tipo.id
+    if not id_factura or not id_nota_credito:
+        raise HTTPException(status_code=404, detail="Tipo de comprobante no encontrado")
+
+    neto_gravado = 0
+    neto_no_gravado = 0
+    exento = 0
+    otros_tributos = 0
+    iva = 0
+    total = 0
+
+    for comprobante in comprobantes:
+        signo = 1 if comprobante.tipo_comprobante_id == id_factura else -1 if comprobante.tipo_comprobante_id == id_nota_credito else 0
+        if signo == 0:
+            continue
+        neto_gravado += signo * (comprobante.neto_gravado or 0)
+        neto_no_gravado += signo * (comprobante.neto_no_gravado or 0)
+        exento += signo * (comprobante.exento or 0)
+        otros_tributos += signo * (comprobante.otros_tributos or 0)
+        iva += signo * (comprobante.iva or 0)
+        total += signo * (comprobante.total or 0)
+
+    return {
+        "cuit": cuit,
+        "fecha_inicio": fecha_inicio,
+        "fecha_fin": fecha_fin,
+        "neto_gravado": neto_gravado,
+        "neto_no_gravado": neto_no_gravado,
+        "exento": exento,
+        "otros_tributos": otros_tributos,
+        "iva": iva,
+        "total": total,
+    }
 
 
 @comprobante.post("/comprobantes/upload")
