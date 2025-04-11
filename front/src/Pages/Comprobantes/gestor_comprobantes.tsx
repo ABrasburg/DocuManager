@@ -5,6 +5,7 @@ import dayjs from 'dayjs';
 import '@inovua/reactdatagrid-community/index.css';
 
 import './gestor_comprobantes.css';
+import Navbar from '../Utils/navbar';
 import ExitoPopup from '../Utils/exito_popup';
 import ComprobantePopup from './Popup/comprobante';
 import ComprobanteEditPopup from './Popup/comprobante_edit';
@@ -288,6 +289,7 @@ const GestorComprobantes: React.FC = () => {
   
   return (
     <div className="p-6 flex justify-center">
+      <Navbar />
       <div className="w-full max-w-5xl bg-white shadow-lg rounded-2xl p-8 space-y-6">
         <Typography.Title level={3} className="text-center">
           Gestión de Comprobantes
