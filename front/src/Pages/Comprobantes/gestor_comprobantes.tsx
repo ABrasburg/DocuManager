@@ -37,6 +37,8 @@ interface Emisor {
 }
 
 const GestorComprobantes: React.FC = () => {
+  const [loadingComprobantes, setLoadingComprobantes] = useState(false);
+
   const [comprobantes, setComprobantes] = useState<Comprobante[]>([]);
   const [emisores, setEmisores] = useState<any[]>([]);
   const [tiposComprobantes, setTiposComprobantes] = useState<any[]>([]);
@@ -64,6 +66,7 @@ const GestorComprobantes: React.FC = () => {
 
   const fetchComprobantes = async () => {
     try {
+      setLoadingComprobantes(true);
       const response = await fetch('http://localhost:9000/comprobantes');
       const data = await response.json();
       setComprobantes(data || []);
@@ -87,6 +90,8 @@ const GestorComprobantes: React.FC = () => {
       console.error("Error fetching:", error);
       setComprobantes([]);
       message.error('Error al cargar comprobantes');
+    } finally {
+      setLoadingComprobantes(false);
     }
   };
 
@@ -293,9 +298,7 @@ const GestorComprobantes: React.FC = () => {
     <div className="p-6 flex justify-center">
       <Navbar />
       <div className="w-full max-w-5xl bg-white shadow-lg rounded-2xl p-8 space-y-6">
-        <Typography.Title level={3} className="text-center">
-          Gestión de Comprobantes
-        </Typography.Title>
+        <h1>Gestión de Comprobantes</h1>
         
         <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '20px' }}>
           <div style={{ display: 'flex', gap: '10px' }}>
@@ -332,7 +335,7 @@ const GestorComprobantes: React.FC = () => {
           </Button>
         </div>
         
-        <Table<Comprobante> columns={columns} dataSource={comprobantes} size="middle"/>
+        <Table<Comprobante> loading={loadingComprobantes} columns={columns} dataSource={comprobantes} size="middle"/>
       </div>
       <ExitoPopup
         open={mostrarPopupExito}

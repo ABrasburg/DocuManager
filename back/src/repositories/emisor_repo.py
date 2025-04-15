@@ -29,3 +29,11 @@ class EmisorRepo:
         self.db.delete(db_emisor)
         self.db.commit()
         return db_emisor
+    
+    def update_emisor(self, cuit: int, emisor: EmisorCreate):
+        db_emisor = self.db.query(Emisor).filter(Emisor.cuit == cuit).first()
+        for key, value in emisor.model_dump().items():
+            setattr(db_emisor, key, value)
+        self.db.commit()
+        self.db.refresh(db_emisor)
+        return db_emisor

@@ -26,3 +26,10 @@ def delete_emisor(cuit: int, db: Session = Depends(get_db)):
 @emisor.get("/emisor/{cuit}", response_model=schemas.Emisor)
 def existe_emisor(cuit: int, db: Session = Depends(get_db)):
     return repo.EmisorRepo(db).get_emisor(cuit)
+
+@emisor.put("/emisor/{cuit}", response_model=schemas.Emisor)
+def update_emisor(cuit: int, emisor: schemas.EmisorCreate, db: Session = Depends(get_db)):
+    db_emisor = repo.EmisorRepo(db).get_emisor(cuit)
+    if not db_emisor:
+        raise HTTPException(status_code=404, detail="Emisor not found")
+    return repo.EmisorRepo(db).update_emisor(cuit, emisor)

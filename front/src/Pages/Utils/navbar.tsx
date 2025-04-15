@@ -14,7 +14,7 @@ const Link: React.FC<LinkProps> = ({ to, className, children }) => {
 
   const handleClick = (event: React.MouseEvent<HTMLAnchorElement>) => {
     event.preventDefault();
-    navigate(to); // usamos navigate en lugar de window.location.href para navegación sin recarga
+    navigate(to);
   };
 
   return (
@@ -31,8 +31,9 @@ const Navbar: React.FC = () => {
         <img src={Logo} className="App-logo" alt="logo" style={{ height: '11em' }} />
       </header>
       <div className="navbar-right">
-        <Link to="/gestor_comprobantes" className="navbar-link">Comprobantes</Link>
+        <Link to="/gestor_emisores" className="navbar-link">Emisores</Link>
         <Link to="/gestor_cuenta_corriente" className="navbar-link">Cuenta Corriente</Link>
+        <Link to="/gestor_comprobantes" className="navbar-link">Comprobantes</Link>
       </div>
     </nav>
   );
