@@ -31,8 +31,8 @@ const Navbar: React.FC = () => {
         <img src={Logo} className="App-logo" alt="logo" style={{ height: '11em' }} />
       </header>
       <div className="navbar-right">
-        <Link to="/gestor_comprobantes" className="navbar-link">Gestor de Comprobantes</Link>
-        <Link to="/gestor_cuenta_corriente" className="navbar-link">Gestor de Cuenta Corriente</Link>
+        <Link to="/gestor_comprobantes" className="navbar-link">Comprobantes</Link>
+        <Link to="/gestor_cuenta_corriente" className="navbar-link">Cuenta Corriente</Link>
       </div>
     </nav>
   );

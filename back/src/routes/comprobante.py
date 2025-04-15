@@ -268,3 +268,69 @@ async def upload_comprobantes(
         raise HTTPException(400, detail="El archivo CSV no tiene un formato válido")
     except Exception as e:
         raise HTTPException(500, detail=f"Error al procesar el archivo: {str(e)}")
+
+
+from fastapi.responses import StreamingResponse
+from io import StringIO
+import pandas as pd
+
+@comprobante.get("/comprobantes/download")
+async def download_comprobantes(
+    fecha_inicio: str,
+    fecha_fin: str,
+    db: Session = Depends(get_db),
+):
+    print(f"Descargando comprobantes desde {fecha_inicio} hasta {fecha_fin}")
+    """
+    Descarga los comprobantes filtrados por fechas en formato CSV.
+    """
+    comprobantes = repo.ComprobanteRepo(db).get_comprobantes_by_fechas(
+        fecha_inicio, fecha_fin
+    )
+
+    if not comprobantes:
+        raise HTTPException(status_code=404, detail="No se encontraron comprobantes")
+    
+    tipos_comprobante = TipoComprobanteRepo(db).get_tipos_comprobantes()
+    emisores = EmisorRepo(db).get_emisores()
+
+    data = []
+    for comprobante in comprobantes:
+        tipo_comprobante = next(
+            (t for t in tipos_comprobante if t.id == comprobante.tipo_comprobante_id), None
+        )
+        emisor = next(
+            (e for e in emisores if e.id == comprobante.emisor_id), None
+        )
+        data.append({
+            "Fecha de Emisión": comprobante.fecha_emision,
+            "Tipo de Comprobante": tipo_comprobante.nombre if tipo_comprobante else "",
+            "Punto de Venta": comprobante.punto_venta,
+            "Número Desde": comprobante.numero_desde,
+            "Número Hasta": comprobante.numero_hasta,
+            "Cód. Autorización": comprobante.cod_autorizacion,
+            "Tipo Doc. Emisor": emisor.tipo_doc if emisor else "",
+            "Nro. Doc. Emisor": emisor.cuit if emisor else "",
+            "Denominación Emisor": emisor.denominacion if emisor else "",
+            "Tipo Cambio": comprobante.tipo_cambio,
+            "Moneda": comprobante.moneda,
+            "Imp. Neto Gravado": comprobante.neto_gravado,
+            "Imp. Neto No Gravado": comprobante.neto_no_gravado,
+            "Imp. Op. Exentas": comprobante.exento,
+            "IVA": comprobante.iva,
+            "Otros Tributos": comprobante.otros_tributos,
+            "Imp. Total": comprobante.total,
+        })
+
+    csv_buffer = StringIO()
+    df = pd.DataFrame(data)
+    df.to_csv(csv_buffer, index=False, sep=';', decimal=',', quotechar='"')
+    csv_buffer.seek(0)
+
+    filename = f"comprobantes_{fecha_inicio}_to_{fecha_fin}.csv"
+    
+    return StreamingResponse(
+        iter([csv_buffer.getvalue()]),
+        media_type="text/csv",
+        headers={"Content-Disposition": f"attachment; filename={filename}"}
+    )

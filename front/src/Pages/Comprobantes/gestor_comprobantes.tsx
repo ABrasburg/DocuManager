@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Table, Button, message, Upload, Typography, DatePicker, Space } from 'antd';
-import { UploadOutlined, DeleteOutlined, MoreOutlined, FormOutlined } from "@ant-design/icons";
+import { UploadOutlined, DeleteOutlined, MoreOutlined, FormOutlined, DownloadOutlined } from "@ant-design/icons";
 import dayjs from 'dayjs';
 import '@inovua/reactdatagrid-community/index.css';
 
@@ -10,6 +10,7 @@ import ExitoPopup from '../Utils/exito_popup';
 import ComprobantePopup from './Popup/comprobante';
 import ComprobanteEditPopup from './Popup/comprobante_edit';
 import SumaPopup from './Popup/obtener_suma';
+import DownloadComprobante from './Popup/descargar_comprobantes';
 
 interface Comprobante {
   id: number;
@@ -47,6 +48,7 @@ const GestorComprobantes: React.FC = () => {
   const [mostrarPopupComprobante, setMostrarPopupComprobante] = useState(false);
   const [mostrarPopupComprobanteEdit, setMostrarPopupComprobanteEdit] = useState(false);
   const [mostrarPopupSuma, setMostrarPopupSuma] = useState(false);
+  const [mostrarDownload, setMostrarDownload] = useState(false);
 
   useEffect(() => {
     fetchComprobantes();
@@ -296,19 +298,32 @@ const GestorComprobantes: React.FC = () => {
         </Typography.Title>
         
         <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '20px' }}>
-          <Upload
-            accept=".csv"
-            showUploadList={false}
-            beforeUpload={(file) => {
-              handleUpload(file);
-              return false;
-            }}
-            maxCount={1}
-          >
-            <Button icon={<UploadOutlined />} type="primary">
-              Cargar Comprobante
+          <div style={{ display: 'flex', gap: '10px' }}>
+            <Upload
+              accept=".csv"
+              showUploadList={false}
+              beforeUpload={(file) => {
+          handleUpload(file);
+          return false;
+              }}
+              maxCount={1}
+            >
+              <Button icon={<UploadOutlined />} type="primary">
+          Cargar Comprobante
+              </Button>
+            </Upload>
+            <Button
+              type="primary"
+              icon={<DownloadOutlined />}
+              onClick={() => setMostrarDownload(true)}
+            >
+              Descargar Comprobantes
             </Button>
-          </Upload>
+            <DownloadComprobante
+              open={mostrarDownload}
+              onClose={() => setMostrarDownload(false)}
+            />
+          </div>
           <Button
             type="primary"
             onClick={() => setMostrarPopupSuma(true)}
