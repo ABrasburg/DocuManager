@@ -1,5 +1,19 @@
-import Popup from 'reactjs-popup';
-import 'reactjs-popup/dist/index.css';
+import {
+  Modal,
+  ModalOverlay,
+  ModalContent,
+  ModalHeader,
+  ModalCloseButton,
+  ModalBody,
+  ModalFooter,
+  Button,
+  Input,
+  FormControl,
+  FormLabel,
+  Grid,
+  GridItem,
+  Text,
+} from '@chakra-ui/react';
 import React, { useState, useEffect } from 'react';
 
 interface Comprobante {
@@ -46,166 +60,171 @@ const ComprobantePopup: React.FC<Props> = ({ comprobante, onClose, open, handleS
     }
   };
 
-  const handleNestedChange = <K extends keyof Comprobante, NK extends keyof Comprobante[K]>(
-    field: K,
-    nestedField: NK,
-    value: Comprobante[K][NK]
-  ) => {
-    if (editableComprobante && typeof editableComprobante[field] === 'object') {
+  const handleEmisorChange = (field: keyof Comprobante['emisor'], value: string) => {
+    if (editableComprobante) {
       setEditableComprobante({
         ...editableComprobante,
-        [field]: {
-          ...(editableComprobante[field] as any),
-          [nestedField]: value,
+        emisor: {
+          ...editableComprobante.emisor,
+          [field]: value,
         },
       });
     }
   };
 
+  const handleTipoComprobanteChange = (value: string) => {
+    if (editableComprobante) {
+      setEditableComprobante({
+        ...editableComprobante,
+        tipo_comprobante: {
+          ...editableComprobante.tipo_comprobante,
+          nombre: value,
+        },
+      });
+    }
+  };
+
+  const isValid =
+    editableComprobante &&
+    typeof editableComprobante.cod_autorizacion === 'string' &&
+    editableComprobante.cod_autorizacion.trim() !== '' &&
+    editableComprobante.total >= 0;
+
   return (
-    <Popup open={open} onClose={onClose} modal nested>
-      <div className="p-6 bg-white rounded-xl shadow-xl max-w-xl w-full">
-        <h2 className="text-xl font-semibold mb-4 text-center border-b pb-2">
-          Editar Comprobante
-        </h2>
-
-        {editableComprobante ? (
-          <form className="space-y-4 text-sm text-gray-700">
-            <div>
-              <label className="block font-medium">Fecha emisión:</label>
-              <input
-                type="text"
-                value={editableComprobante.fecha_emision}
-                onChange={(e) => handleChange('fecha_emision', e.target.value)}
-                className="w-full border rounded px-3 py-2"
-              />
-            </div>
-
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <label className="block font-medium">Punto de venta:</label>
-                <input
-                  type="number"
-                  value={editableComprobante.punto_venta}
-                  onChange={(e) => handleChange('punto_venta', Number(e.target.value))}
-                  className="w-full border rounded px-3 py-2"
-                />
-              </div>
-              <div>
-                <label className="block font-medium">Tipo cambio:</label>
-                <input
-                  type="number"
-                  value={editableComprobante.tipo_cambio}
-                  onChange={(e) => handleChange('tipo_cambio', Number(e.target.value))}
-                  className="w-full border rounded px-3 py-2"
-                />
-              </div>
-            </div>
-
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <label className="block font-medium">Número desde:</label>
-                <input
-                  type="number"
-                  value={editableComprobante.numero_desde}
-                  onChange={(e) => handleChange('numero_desde', Number(e.target.value))}
-                  className="w-full border rounded px-3 py-2"
-                />
-              </div>
-              <div>
-                <label className="block font-medium">Número hasta:</label>
-                <input
-                  type="number"
-                  value={editableComprobante.numero_hasta}
-                  onChange={(e) => handleChange('numero_hasta', Number(e.target.value))}
-                  className="w-full border rounded px-3 py-2"
-                />
-              </div>
-            </div>
-
-            <div>
-              <label className="block font-medium">Cod. autorización:</label>
-              <input
-                type="text"
-                value={editableComprobante.cod_autorizacion}
-                onChange={(e) => handleChange('cod_autorizacion', e.target.value)}
-                className="w-full border rounded px-3 py-2"
-              />
-            </div>
-
-            <div>
-              <label className="block font-medium">Moneda:</label>
-              <input
-                type="text"
-                value={editableComprobante.moneda}
-                onChange={(e) => handleChange('moneda', e.target.value)}
-                className="w-full border rounded px-3 py-2"
-              />
-            </div>
-
-            <div>
-              <label className="block font-medium">Total:</label>
-              <input
-                type="number"
-                value={editableComprobante.total}
-                onChange={(e) => handleChange('total', Number(e.target.value))}
-                className="w-full border rounded px-3 py-2"
-              />
-            </div>
-
-            <div>
-              <label className="block font-medium">Emisor:</label>
-              <div className="grid grid-cols-2 gap-4">
-                <input
+    <Modal isOpen={open} onClose={onClose} size="xl" isCentered>
+      <ModalOverlay />
+      <ModalContent>
+        <ModalHeader>Editar Comprobante</ModalHeader>
+        <ModalCloseButton />
+        <ModalBody>
+          {editableComprobante ? (
+            <>
+              <FormControl mb={4}>
+                <FormLabel>Fecha emisión</FormLabel>
+                <Input
                   type="text"
-                  placeholder="Denominación"
-                  value={editableComprobante.emisor.denominacion}
-                  onChange={(e) => handleNestedChange('emisor', 'denominacion', e.target.value)}
-                  className="w-full border rounded px-3 py-2"
+                  value={editableComprobante.fecha_emision}
+                  onChange={(e) => handleChange('fecha_emision', e.target.value)}
+                  autoFocus
                 />
-                <input
+              </FormControl>
+
+              <Grid templateColumns="repeat(2, 1fr)" gap={4}>
+                <FormControl>
+                  <FormLabel>Punto de venta</FormLabel>
+                  <Input
+                    type="number"
+                    value={editableComprobante.punto_venta}
+                    onChange={(e) => handleChange('punto_venta', Number(e.target.value))}
+                  />
+                </FormControl>
+
+                <FormControl>
+                  <FormLabel>Tipo cambio</FormLabel>
+                  <Input
+                    type="number"
+                    value={editableComprobante.tipo_cambio}
+                    onChange={(e) => handleChange('tipo_cambio', Number(e.target.value))}
+                  />
+                </FormControl>
+              </Grid>
+
+              <Grid templateColumns="repeat(2, 1fr)" gap={4} mt={4}>
+                <FormControl>
+                  <FormLabel>Número desde</FormLabel>
+                  <Input
+                    type="number"
+                    value={editableComprobante.numero_desde}
+                    onChange={(e) => handleChange('numero_desde', Number(e.target.value))}
+                  />
+                </FormControl>
+
+                <FormControl>
+                  <FormLabel>Número hasta</FormLabel>
+                  <Input
+                    type="number"
+                    value={editableComprobante.numero_hasta}
+                    onChange={(e) => handleChange('numero_hasta', Number(e.target.value))}
+                  />
+                </FormControl>
+              </Grid>
+
+              <FormControl mt={4}>
+                <FormLabel>Cod. autorización</FormLabel>
+                <Input
                   type="text"
-                  placeholder="CUIT"
-                  value={editableComprobante.emisor.cuit}
-                  onChange={(e) => handleNestedChange('emisor', 'cuit', e.target.value)}
-                  className="w-full border rounded px-3 py-2"
+                  value={editableComprobante.cod_autorizacion}
+                  onChange={(e) => handleChange('cod_autorizacion', e.target.value)}
                 />
-              </div>
-            </div>
+              </FormControl>
 
-            <div>
-              <label className="block font-medium">Tipo de comprobante:</label>
-              <input
-                type="text"
-                value={editableComprobante.tipo_comprobante.nombre}
-                onChange={(e) => handleNestedChange('tipo_comprobante', 'nombre', e.target.value)}
-                className="w-full border rounded px-3 py-2"
-              />
-            </div>
-          </form>
-        ) : (
-          <p className="text-red-500">No hay datos disponibles para este comprobante.</p>
-        )}
+              <FormControl mt={4}>
+                <FormLabel>Moneda</FormLabel>
+                <Input
+                  type="text"
+                  value={editableComprobante.moneda}
+                  onChange={(e) => handleChange('moneda', e.target.value)}
+                />
+              </FormControl>
 
-        <div className="mt-4 flex justify-between">
-          <button
-            className="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700"
-            onClick={onClose}
-          >
+              <FormControl mt={4}>
+                <FormLabel>Total</FormLabel>
+                <Input
+                  type="number"
+                  value={editableComprobante.total}
+                  onChange={(e) => handleChange('total', Number(e.target.value))}
+                />
+              </FormControl>
+
+              <FormControl mt={4}>
+                <FormLabel>Emisor</FormLabel>
+                <Grid templateColumns="repeat(2, 1fr)" gap={4}>
+                  <Input
+                    placeholder="Denominación"
+                    value={editableComprobante.emisor.denominacion}
+                    onChange={(e) => handleEmisorChange('denominacion', e.target.value)}
+                  />
+                  <Input
+                    placeholder="CUIT"
+                    value={editableComprobante.emisor.cuit}
+                    onChange={(e) => handleEmisorChange('cuit', e.target.value)}
+                  />
+                </Grid>
+              </FormControl>
+
+              <FormControl mt={4}>
+                <FormLabel>Tipo de comprobante</FormLabel>
+                <Input
+                  type="text"
+                  value={editableComprobante.tipo_comprobante.nombre}
+                  onChange={(e) => handleTipoComprobanteChange(e.target.value)}
+                />
+              </FormControl>
+            </>
+          ) : (
+            <Text color="red.500">No hay datos disponibles para este comprobante.</Text>
+          )}
+        </ModalBody>
+
+        <ModalFooter>
+          <Button variant="ghost" mr={3} onClick={onClose}>
             Cerrar
-          </button>
-          <button
-            className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+          </Button>
+          <Button
+            colorScheme="blue"
             onClick={() => {
-              handleSave(editableComprobante as Comprobante);
+              if (editableComprobante) {
+                handleSave(editableComprobante);
+              }
               onClose();
             }}
+            isDisabled={!isValid}
           >
             Guardar
-          </button>
-        </div>
-      </div>
-    </Popup>
+          </Button>
+        </ModalFooter>
+      </ModalContent>
+    </Modal>
   );
 };
 

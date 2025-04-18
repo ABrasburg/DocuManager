@@ -62,7 +62,9 @@ const GestorEmisores: React.FC = () => {
         <div>
             <Navbar />
             <div className="container">
-                <h1>Gestor de Emisores</h1>
+                <h1 style={{ fontSize: '24px', fontWeight: 'bold', textAlign: 'center', marginBottom: '20px' }}>
+                    Gestor de Emisores
+                </h1>
                 <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '20px' }}>
                     <Button type="primary" onClick={() => handleCreate()}>
                         Crear Emisor

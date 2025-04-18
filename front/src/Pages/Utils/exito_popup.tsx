@@ -1,6 +1,14 @@
 import React, { useEffect } from 'react';
-import Popup from 'reactjs-popup';
-import 'reactjs-popup/dist/index.css';
+import {
+  Modal,
+  ModalOverlay,
+  ModalContent,
+  ModalHeader,
+  ModalBody,
+  ModalFooter,
+  Button,
+  useToast,
+} from '@chakra-ui/react';
 
 interface ExitoPopupProps {
   open: boolean;
@@ -10,28 +18,25 @@ interface ExitoPopupProps {
 
 const ExitoPopup: React.FC<ExitoPopupProps> = ({ open, onClose, texto }) => {
   useEffect(() => {
-    if (open) {
-      const timer = setTimeout(() => {
-        onClose();
-      }, 3000); // cerrar después de 3s
-      return () => clearTimeout(timer);
-    }
-  }, [open, onClose]);
+  }, [open]);
 
   return (
-    <Popup open={open} onClose={onClose} modal nested>
-      <div className="relative p-4 text-center">
-        <h2 className="text-green-600 text-lg font-semibold">¡Éxito!</h2>
-        <p className="mt-2">{texto}</p>
-        {/* Botón para cerrar */}
-        <button
-          className="mt-4 px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700"
-          onClick={onClose}
-        >
-          Cerrar
-        </button>
-      </div>
-    </Popup>
+    <Modal isOpen={open} onClose={onClose}>
+      <ModalOverlay />
+      <ModalContent>
+        <ModalHeader bg="green.100" color="green.800" fontWeight="bold">
+          ¡Éxito!
+        </ModalHeader>
+        <ModalBody textAlign="center" p={6}>
+          <p>{texto}</p>
+        </ModalBody>
+        <ModalFooter>
+          <Button colorScheme="green" onClick={onClose}>
+            Cerrar
+          </Button>
+        </ModalFooter>
+      </ModalContent>
+    </Modal>
   );
 };
 

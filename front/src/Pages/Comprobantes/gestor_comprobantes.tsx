@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Table, Button, message, Upload, Typography, DatePicker, Space } from 'antd';
+import { Table, Button, message, Upload, DatePicker, Space, Spin } from 'antd';
 import { UploadOutlined, DeleteOutlined, MoreOutlined, FormOutlined, DownloadOutlined } from "@ant-design/icons";
 import dayjs from 'dayjs';
 import '@inovua/reactdatagrid-community/index.css';
@@ -53,6 +53,7 @@ const GestorComprobantes: React.FC = () => {
   const [mostrarDownload, setMostrarDownload] = useState(false);
 
   useEffect(() => {
+    setLoadingComprobantes(true);
     fetchComprobantes();
   }, []);
 
@@ -67,8 +68,10 @@ const GestorComprobantes: React.FC = () => {
   const fetchComprobantes = async () => {
     try {
       setLoadingComprobantes(true);
+      console.log("Fetching comprobantes...");
       const response = await fetch('http://localhost:9000/comprobantes');
       const data = await response.json();
+      console.log("Comprobantes fetched:", data);
       setComprobantes(data || []);
       setEmisores(
         data.reduce((acc: Emisor[], comprobante: Comprobante) => {
@@ -96,6 +99,7 @@ const GestorComprobantes: React.FC = () => {
   };
 
   const handleUpload = async (file: File) => {
+    setLoadingComprobantes(true);
     const formData = new FormData();
     formData.append('file', file);
     try {
@@ -112,6 +116,8 @@ const GestorComprobantes: React.FC = () => {
     } catch (error) {
       console.error("Error uploading:", error);
       message.error('Error al cargar comprobantes');
+    } finally {
+      setLoadingComprobantes(false);
     }
   };
 
@@ -298,7 +304,9 @@ const GestorComprobantes: React.FC = () => {
     <div className="p-6 flex justify-center">
       <Navbar />
       <div className="w-full max-w-5xl bg-white shadow-lg rounded-2xl p-8 space-y-6">
-        <h1>Gestión de Comprobantes</h1>
+        <h1 style={{ fontSize: '24px', fontWeight: 'bold', textAlign: 'center', marginBottom: '20px' }}>
+          Gestión de Comprobantes
+        </h1>
         
         <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '20px' }}>
           <div style={{ display: 'flex', gap: '10px' }}>
@@ -306,13 +314,13 @@ const GestorComprobantes: React.FC = () => {
               accept=".csv"
               showUploadList={false}
               beforeUpload={(file) => {
-          handleUpload(file);
-          return false;
+                handleUpload(file);
+                return false;
               }}
               maxCount={1}
             >
               <Button icon={<UploadOutlined />} type="primary">
-          Cargar Comprobante
+                Cargar Comprobante
               </Button>
             </Upload>
             <Button
@@ -335,7 +343,9 @@ const GestorComprobantes: React.FC = () => {
           </Button>
         </div>
         
-        <Table<Comprobante> loading={loadingComprobantes} columns={columns} dataSource={comprobantes} size="middle"/>
+        <Spin spinning={loadingComprobantes} tip="Cargando comprobantes...">
+          <Table<Comprobante> columns={columns} dataSource={comprobantes} size="middle" />
+        </Spin>
       </div>
       <ExitoPopup
         open={mostrarPopupExito}

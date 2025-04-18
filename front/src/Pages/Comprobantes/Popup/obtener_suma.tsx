@@ -1,6 +1,5 @@
-import Popup from 'reactjs-popup';
-import 'reactjs-popup/dist/index.css';
 import React, { useState, useEffect } from 'react';
+import { Modal, ModalContent, ModalHeader, ModalFooter, ModalBody, ModalCloseButton, Button, FormControl, FormLabel, Select, Input } from '@chakra-ui/react';
 
 interface Suma {
     cuit: number;
@@ -12,7 +11,7 @@ interface Suma {
     otros_tributos: number;
     iva: number;
     total: number;
-    }
+}
 
 interface Emisor {
     cuit: string;
@@ -35,12 +34,15 @@ const SumaPopup: React.FC<Props> = ({ open, onClose }) => {
     const handleChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
         setCuit(Number(e.target.value));
     };
+
     const handleFechaInicioChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         setFechaInicio(e.target.value);
     };
+
     const handleFechaFinChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         setFechaFin(e.target.value);
     };
+
     const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
         try {
@@ -68,14 +70,6 @@ const SumaPopup: React.FC<Props> = ({ open, onClose }) => {
             console.error('Error fetching data:', error);
         }
     };
-    const handleClose = () => {
-        setSuma(null);
-        setCuit(0);
-        setFechaInicio('');
-        setFechaFin('');
-        setSegundoPaso(false);
-        onClose();
-    };
 
     const fetchEmisores = async () => {
         try {
@@ -85,77 +79,76 @@ const SumaPopup: React.FC<Props> = ({ open, onClose }) => {
         } catch (error) {
             console.error('Error fetching emisores:', error);
         }
-    }
+    };
 
     useEffect(() => {
-        console.log('Emisores');
         if (open) {
             fetchEmisores();
         }
     }, [open]);
 
-
     return (
-        <Popup open={open} onClose={handleClose} modal>
-            <div className="popup-content">
-                <h2>Obtener Suma</h2>
-                {!segundoPaso ? (
-                    <form onSubmit={handleSubmit}>
-                        <div>
-                            <label>
-                                Emisor:
-                                <select value={cuit} onChange={handleChange} required>
+        <Modal isOpen={open} onClose={onClose} isCentered>
+            <ModalContent>
+                <ModalCloseButton />
+                <ModalHeader>Obtener Suma</ModalHeader>
+                <ModalBody>
+                    {!segundoPaso ? (
+                        <form onSubmit={handleSubmit}>
+                            <FormControl mb={4}>
+                                <FormLabel>Emisor</FormLabel>
+                                <Select value={cuit} onChange={handleChange} required>
                                     <option value="">Seleccione un emisor</option>
-                                    {
-                                    emisores.map((emisor: Emisor) => (
+                                    {emisores.map((emisor: Emisor) => (
                                         <option key={emisor.cuit} value={emisor.cuit}>
                                             {emisor.denominacion}
                                         </option>
                                     ))}
-                                </select>
-                            </label>
-                        </div>
-                        <div>
-                            <label>
-                                Fecha Inicio:
-                                <input type="date" value={fechaInicio} onChange={handleFechaInicioChange} required />
-                            </label>
-                        </div>
-                        <div>
-                            <label>
-                                Fecha Fin:
-                                <input type="date" value={fechaFin} onChange={handleFechaFinChange} required />
-                            </label>
-                        </div>
-                        <div>
-                            <button type="submit">Consultar</button>
-                        </div>
-                    </form>
-                ) : (
-                    <div>
-                        {suma && (
-                            <>
-                                <h3>Resultados:</h3>
-                                <p>Cuit: {suma.cuit}</p>
-                                <p>Fecha Inicio: {suma.fecha_inicio}</p>
-                                <p>Fecha Fin: {suma.fecha_fin}</p>
-                                <p>Neto Gravado: {suma.neto_gravado.toFixed(2)}</p>
-                                <p>Neto No Gravado: {suma.neto_no_gravado.toFixed(2)}</p>
-                                <p>Exento: {suma.exento.toFixed(2)}</p>
-                                <p>Otros Tributos: {suma.otros_tributos.toFixed(2)}</p>
-                                <p>IVA: {suma.iva.toFixed(2)}</p>
-                                <p>Total: {suma.total.toFixed(2)}</p>
-                            </>
-                        )}
-                        <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                            <button onClick={() => setSegundoPaso(false)}>Atrás</button>
-                            <button onClick={handleClose}>Cerrar</button>
-                        </div>
-                    </div>
-                )}
-            </div>
-        </Popup>
+                                </Select>
+                            </FormControl>
+                            <FormControl mb={4}>
+                                <FormLabel>Fecha Inicio</FormLabel>
+                                <Input type="date" value={fechaInicio} onChange={handleFechaInicioChange} required />
+                            </FormControl>
+                            <FormControl mb={4}>
+                                <FormLabel>Fecha Fin</FormLabel>
+                                <Input type="date" value={fechaFin} onChange={handleFechaFinChange} required />
+                            </FormControl>
+                            <Button type="submit" colorScheme="blue" width="full">
+                                Consultar
+                            </Button>
+                        </form>
+                    ) : (
+                        <>
+                            {suma && (
+                                <div>
+                                    <h3>Resultados:</h3>
+                                    <p>Cuit: {suma.cuit}</p>
+                                    <p>Fecha Inicio: {suma.fecha_inicio}</p>
+                                    <p>Fecha Fin: {suma.fecha_fin}</p>
+                                    <p>Neto Gravado: {suma.neto_gravado.toFixed(2)}</p>
+                                    <p>Neto No Gravado: {suma.neto_no_gravado.toFixed(2)}</p>
+                                    <p>Exento: {suma.exento.toFixed(2)}</p>
+                                    <p>Otros Tributos: {suma.otros_tributos.toFixed(2)}</p>
+                                    <p>IVA: {suma.iva.toFixed(2)}</p>
+                                    <p>Total: {suma.total.toFixed(2)}</p>
+                                </div>
+                            )}
+                            <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                                <Button onClick={() => setSegundoPaso(false)} colorScheme="gray">
+                                    Atrás
+                                </Button>
+                                <Button onClick={onClose} colorScheme="red">
+                                    Cerrar
+                                </Button>
+                            </div>
+                        </>
+                    )}
+                </ModalBody>
+                <ModalFooter />
+            </ModalContent>
+        </Modal>
     );
-}
+};
 
 export default SumaPopup;

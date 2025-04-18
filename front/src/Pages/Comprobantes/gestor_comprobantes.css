@@ -1,24 +1,35 @@
 /* Reduce aún más la altura de las filas de la tabla */
 .ant-table-tbody > tr > td {
-  padding: 2px 4px; /* Reduce aún más el padding vertical y horizontal */
-  line-height: 1; /* Ajusta la altura de línea para hacer las filas más compactas */
+  font-size: 14px; /* Disminuye aún más el tamaño de la fuente */
+  padding: 0px 4px; /* Minimiza aún más el padding en las celdas */
+  line-height: 1; /* Mantiene la altura de línea ajustada */
+  word-wrap: break-word; /* Asegura que el texto largo se ajuste */
 }
-  
+
 /* Reduce aún más la altura del encabezado de la tabla */
 .ant-table-thead > tr > th {
-  padding: 2px 4px; /* Reduce el padding del encabezado */
+  padding: 0px 4px; /* Minimiza aún más el padding en las celdas del encabezado */
   line-height: 1;
 }
 
-/* Reduce aún más la diastancia entre las filas de la tabla */
+/* Reduce aún más la distancia entre las filas de la tabla */
 .ant-table-tbody > tr {
+  height: 18px; /* Reduce aún más la altura de las filas */
   margin: 0; /* Elimina el margen entre filas */
 }
 
+/* Ajuste adicional en los bordes de las celdas para compactarlas aún más */
+.ant-table-tbody > tr > td, 
+.ant-table-thead > tr > th {
+  border-width: 0px; /* Elimina los bordes para un diseño más compacto */
+}
+
+/* Estilos para el botón primario */
 .ant-btn-primary {
   background-color: #f5f5dc !important; /* Color crema */
   color: black !important;
   border: none !important;
+  padding: 4px 8px; /* Ajusta el padding del botón */
   transition: background-color 0.3s ease;
 }
 
