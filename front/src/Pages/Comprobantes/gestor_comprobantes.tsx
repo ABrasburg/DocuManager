@@ -7,6 +7,7 @@ import '@inovua/reactdatagrid-community/index.css';
 import './gestor_comprobantes.css';
 import Navbar from '../Utils/navbar';
 import ExitoPopup from '../Utils/exito_popup';
+import ErrorPopup from '../Utils/error_popup';
 import ComprobantePopup from './Popup/comprobante';
 import ComprobanteEditPopup from './Popup/comprobante_edit';
 import SumaPopup from './Popup/obtener_suma';
@@ -38,6 +39,7 @@ interface Emisor {
 
 const GestorComprobantes: React.FC = () => {
   const [loadingComprobantes, setLoadingComprobantes] = useState(false);
+  const [textoError, setTextoError] = useState('');
 
   const [comprobantes, setComprobantes] = useState<Comprobante[]>([]);
   const [emisores, setEmisores] = useState<any[]>([]);
@@ -47,6 +49,7 @@ const GestorComprobantes: React.FC = () => {
 
   const [comprobante, setComprobante] = useState<Comprobante | null>(null);
   const [mostrarPopupExito, setMostrarPopupExito] = useState(false);
+  const [mostrarPopupError, setMostrarPopupError] = useState(false);
   const [mostrarPopupComprobante, setMostrarPopupComprobante] = useState(false);
   const [mostrarPopupComprobanteEdit, setMostrarPopupComprobanteEdit] = useState(false);
   const [mostrarPopupSuma, setMostrarPopupSuma] = useState(false);
@@ -111,11 +114,14 @@ const GestorComprobantes: React.FC = () => {
         setMostrarPopupExito(true);
         fetchComprobantes();
       } else {
-        message.error('Error al cargar comprobantes');
+        const errorData = await response.json();
+        setTextoError(errorData.detail || 'Error desconocido');
+        setMostrarPopupError(true);
       }
     } catch (error) {
-      console.error("Error uploading:", error);
-      message.error('Error al cargar comprobantes');
+      const errorData = error as any;
+      setTextoError(errorData.detail || 'Error desconocido');
+      setMostrarPopupError(true);
     } finally {
       setLoadingComprobantes(false);
     }
@@ -351,6 +357,11 @@ const GestorComprobantes: React.FC = () => {
         open={mostrarPopupExito}
         onClose={() => setMostrarPopupExito(false)}
         texto="Comprobantes cargados correctamente"
+      />
+      <ErrorPopup
+        open={mostrarPopupError}
+        onClose={() => setMostrarPopupError(false)}
+        texto={textoError}
       />
       <ComprobantePopup
         comprobante={comprobante}

@@ -1,11 +1,14 @@
 from typing import List
 from fastapi import APIRouter, Depends, HTTPException, UploadFile, File
+from fastapi.responses import StreamingResponse
 import pandas as pd
 from io import StringIO
 from sqlalchemy.orm import Session
 import src.schemas.comprobante_schema as schemas
 import src.repositories.comprobante_repo as repo
 from src.repositories.tipo_comprobante_repo import TipoComprobanteRepo
+from src.routes.archivo_comprobante import create_archivo_comprobante
+from src.schemas.archivo_comprobante_schema import ArchivoComprobanteCreate
 from src.repositories.emisor_repo import EmisorRepo
 from db import get_db
 
@@ -176,7 +179,13 @@ async def upload_comprobantes(
     """
     if not file.filename.endswith(".csv"):
         raise HTTPException(400, detail="Solo se permiten archivos CSV")
-
+    try:
+        archivo_comprobante = ArchivoComprobanteCreate(
+            nombre_archivo=file.filename,
+        )
+        create_archivo_comprobante(archivo_comprobante, db)
+    except Exception as e:
+        raise HTTPException(500, detail=f"Ya se cargo el archivo: {str(file.filename)}")
     try:
         contents = await file.read()
         content_str = contents.decode('utf-8-sig')
@@ -268,11 +277,6 @@ async def upload_comprobantes(
         raise HTTPException(400, detail="El archivo CSV no tiene un formato válido")
     except Exception as e:
         raise HTTPException(500, detail=f"Error al procesar el archivo: {str(e)}")
-
-
-from fastapi.responses import StreamingResponse
-from io import StringIO
-import pandas as pd
 
 @comprobante.get("/comprobantes/download")
 async def download_comprobantes(

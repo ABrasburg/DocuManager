@@ -134,15 +134,6 @@ const ModificarEmisor: React.FC<Props> = ({ open, onClose, emisor, editar, nuevo
         <ModalHeader>{editar ? 'Modificar Emisor' : 'Nuevo Emisor'}</ModalHeader>
         <ModalBody>
           <form onSubmit={handleSubmit}>
-            <FormControl id="tipo_doc" mb={4}>
-              <FormLabel>Tipo de Documento</FormLabel>
-              <Input
-                type="text"
-                value={tipo_doc}
-                onChange={(e) => setTipoDoc(e.target.value)}
-                placeholder="Tipo de Documento"
-              />
-            </FormControl>
             <FormControl id="cuit" mb={4}>
               <FormLabel>CUIT</FormLabel>
               <Input
