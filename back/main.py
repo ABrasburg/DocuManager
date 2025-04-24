@@ -11,6 +11,7 @@ from src.init_db.init_db import init_db
 from src.routes.tipo_comprobante import tipo_comprobante
 from src.routes.emisor import emisor
 from src.routes.comprobante import comprobante
+from src.routes.zeta import zeta
 
 app = FastAPI(
     title="GIO API",
@@ -21,6 +22,7 @@ app = FastAPI(
 app.include_router(tipo_comprobante)
 app.include_router(emisor)
 app.include_router(comprobante)
+app.include_router(zeta)
 
 # CORS Middleware configuration
 app.add_middleware(
