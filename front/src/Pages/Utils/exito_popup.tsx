@@ -7,7 +7,6 @@ import {
   ModalBody,
   ModalFooter,
   Button,
-  useToast,
 } from '@chakra-ui/react';
 
 interface ExitoPopupProps {

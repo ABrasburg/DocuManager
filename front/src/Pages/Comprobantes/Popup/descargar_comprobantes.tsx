@@ -13,6 +13,7 @@ import {
   Input,
   useToast,
 } from '@chakra-ui/react';
+import api from '../../../api';
 
 interface Props {
   open: boolean;
@@ -30,29 +31,22 @@ const DescargarComprobantes: React.FC<Props> = ({ open, onClose }) => {
         fecha_inicio: fechaInicio,
         fecha_fin: fechaFin,
       });
-
-      const response = await fetch(`http://localhost:9000/comprobantes/download?${params.toString()}`, {
-        method: 'GET',
+  
+      const response = await api.get(`/comprobantes/download?${params.toString()}`, {
+        responseType: 'blob',
       });
 
-      if (!response.ok) {
-        throw new Error('Error al descargar los comprobantes');
-      }
-
-      const blob = await response.blob();
-
-      // Obtener nombre de archivo desde el header 'Content-Disposition'
-      const disposition = response.headers.get("Content-Disposition");
+      const disposition = response.headers["content-disposition"];
       let filename = "comprobantes.csv";
-
+  
       if (disposition && disposition.includes("filename=")) {
         const match = disposition.match(/filename="?([^"]+)"?/);
         if (match?.[1]) {
           filename = match[1];
         }
       }
-
-      const url = window.URL.createObjectURL(blob);
+  
+      const url = window.URL.createObjectURL(response.data);
       const a = document.createElement('a');
       a.href = url;
       a.download = filename;
@@ -60,7 +54,7 @@ const DescargarComprobantes: React.FC<Props> = ({ open, onClose }) => {
       a.click();
       a.remove();
       window.URL.revokeObjectURL(url);
-
+  
       toast({
         title: 'Descarga completada.',
         description: 'Los comprobantes fueron descargados correctamente.',
@@ -68,9 +62,8 @@ const DescargarComprobantes: React.FC<Props> = ({ open, onClose }) => {
         duration: 3000,
         isClosable: true,
       });
-
+  
     } catch (error) {
-      console.error('Error en la descarga:', error);
       toast({
         title: 'Error en la descarga.',
         description: 'No se pudieron descargar los comprobantes.',
@@ -79,7 +72,7 @@ const DescargarComprobantes: React.FC<Props> = ({ open, onClose }) => {
         isClosable: true,
       });
     }
-  };
+  };  
 
   return (
     <Modal isOpen={open} onClose={onClose} isCentered>

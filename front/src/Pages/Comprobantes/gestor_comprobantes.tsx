@@ -4,7 +4,8 @@ import { UploadOutlined, DeleteOutlined, MoreOutlined, FormOutlined, DownloadOut
 import dayjs from 'dayjs';
 import '@inovua/reactdatagrid-community/index.css';
 
-import './gestor_comprobantes.css';
+import api from  '../../api'
+
 import Navbar from '../Utils/navbar';
 import ExitoPopup from '../Utils/exito_popup';
 import ErrorPopup from '../Utils/error_popup';
@@ -64,17 +65,15 @@ const GestorComprobantes: React.FC = () => {
     return dayjs(date).isSame(start, 'day') || dayjs(date).isAfter(start, 'day');
   };
 
-    const isSameOrBefore = (date: string, end: string) => {
-        return dayjs(date).isSame(end, 'day') || dayjs(date).isBefore(end, 'day');
-    };
+  const isSameOrBefore = (date: string, end: string) => {
+    return dayjs(date).isSame(end, 'day') || dayjs(date).isBefore(end, 'day');
+  };
 
   const fetchComprobantes = async () => {
     try {
       setLoadingComprobantes(true);
-      console.log("Fetching comprobantes...");
-      const response = await fetch('http://localhost:9000/comprobantes');
-      const data = await response.json();
-      console.log("Comprobantes fetched:", data);
+      const response = await api.get('/comprobantes');
+      const data = response.data;
       setComprobantes(data || []);
       setEmisores(
         data.reduce((acc: Emisor[], comprobante: Comprobante) => {
@@ -93,7 +92,6 @@ const GestorComprobantes: React.FC = () => {
         }, [])
       );
     } catch (error) {
-      console.error("Error fetching:", error);
       setComprobantes([]);
       message.error('Error al cargar comprobantes');
     } finally {
@@ -105,22 +103,20 @@ const GestorComprobantes: React.FC = () => {
     setLoadingComprobantes(true);
     const formData = new FormData();
     formData.append('file', file);
+  
     try {
-      const response = await fetch('http://localhost:9000/comprobantes/upload', {
-        method: 'POST',
-        body: formData,
+      await api.post('/comprobantes/upload', formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
       });
-      if (response.ok) {
-        setMostrarPopupExito(true);
-        fetchComprobantes();
-      } else {
-        const errorData = await response.json();
-        setTextoError(errorData.detail || 'Error desconocido');
-        setMostrarPopupError(true);
-      }
-    } catch (error) {
-      const errorData = error as any;
-      setTextoError(errorData.detail || 'Error desconocido');
+  
+      setMostrarPopupExito(true);
+      fetchComprobantes();
+  
+    } catch (error: any) {
+      const errorData = error.response?.data;
+      setTextoError(errorData?.detail || 'Error desconocido');
       setMostrarPopupError(true);
     } finally {
       setLoadingComprobantes(false);
@@ -129,24 +125,18 @@ const GestorComprobantes: React.FC = () => {
 
   const handleEdit = async (comprobante: Comprobante) => {
     try {
-      const response = await fetch(`http://localhost:9000/comprobante/${comprobante.id}`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(comprobante),
-      });
-      if (response.ok) {
+      const response = await api.put(`/comprobante/${comprobante.id}`, comprobante);
+  
+      if (response.status === 200) {
         message.success('Comprobante editado correctamente');
         fetchComprobantes();
       } else {
         message.error('Error al editar comprobante');
       }
     } catch (error) {
-      console.error("Error editing:", error);
       message.error('Error al editar comprobante');
     }
-  };
+  };  
 
   const columns = [
     {
@@ -245,8 +235,8 @@ const GestorComprobantes: React.FC = () => {
         key: 'acciones',
         render: (_: any, record: Comprobante) => (
           <div>
-            <FormOutlined
-                style={{ color: 'green', cursor: 'pointer' }}
+            <Button
+                icon={<FormOutlined />}
                 onClick={async () => {
                     try {
                       const response = await fetch(`http://localhost:9000/comprobante/${record.id}`);
@@ -263,8 +253,8 @@ const GestorComprobantes: React.FC = () => {
                     }
                 }}
             />
-            <DeleteOutlined
-              style={{ color: 'red', cursor: 'pointer', marginLeft: '10px' }}
+            <Button
+              icon={<DeleteOutlined />}
               onClick={async () => {
                 try {
                   const response = await fetch(`http://localhost:9000/comprobante/${record.id}`, {
@@ -283,8 +273,8 @@ const GestorComprobantes: React.FC = () => {
                 }
               }}
             />
-            <MoreOutlined
-                style={{ color: '#1890ff', cursor: 'pointer', marginLeft: '10px' }}
+            <Button
+                icon={<MoreOutlined />}
                 onClick={async () => {
                     try {
                       const response = await fetch(`http://localhost:9000/comprobante/${record.id}`);
@@ -348,11 +338,10 @@ const GestorComprobantes: React.FC = () => {
             Obtener Suma
           </Button>
         </div>
-        
-        <Spin spinning={loadingComprobantes} tip="Cargando comprobantes...">
-          <Table<Comprobante> columns={columns} dataSource={comprobantes} size="middle" />
-        </Spin>
       </div>
+      <Spin spinning={loadingComprobantes} tip="Cargando comprobantes...">
+          <Table<Comprobante> columns={columns} dataSource={comprobantes} size="middle" />
+      </Spin>
       <ExitoPopup
         open={mostrarPopupExito}
         onClose={() => setMostrarPopupExito(false)}

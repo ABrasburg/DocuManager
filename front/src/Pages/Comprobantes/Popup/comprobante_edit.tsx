@@ -11,7 +11,6 @@ import {
   FormControl,
   FormLabel,
   Grid,
-  GridItem,
   Text,
 } from '@chakra-ui/react';
 import React, { useState, useEffect } from 'react';

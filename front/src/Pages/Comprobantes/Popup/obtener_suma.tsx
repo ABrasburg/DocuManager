@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Modal, ModalContent, ModalHeader, ModalFooter, ModalBody, ModalCloseButton, Button, FormControl, FormLabel, Select, Input } from '@chakra-ui/react';
+import api from '../../../api';
 
 interface Suma {
     cuit: number;
@@ -46,40 +47,37 @@ const SumaPopup: React.FC<Props> = ({ open, onClose }) => {
     const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
         try {
-            const data = {
-                cuit: cuit,
-                fecha_inicio: fechaInicio,
-                fecha_fin: fechaFin,
-            };
-            const queryParams = new URLSearchParams({
-                cuit: data.cuit.toString(),
-                fecha_inicio: data.fecha_inicio,
-                fecha_fin: data.fecha_fin,
-            }).toString();
-
-            const response = await fetch(`http://localhost:9000/comprobantes/sumar?${queryParams}`, {
-                method: 'GET',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-            });
-            const responseData = await response.json();
-            setSuma(responseData);
-            setSegundoPaso(true);
+          const data = {
+            cuit: cuit,
+            fecha_inicio: fechaInicio,
+            fecha_fin: fechaFin,
+          };
+      
+          const queryParams = new URLSearchParams({
+            cuit: data.cuit.toString(),
+            fecha_inicio: data.fecha_inicio,
+            fecha_fin: data.fecha_fin,
+          }).toString();
+      
+          const response = await api.get(`/comprobantes/sumar?${queryParams}`, {
+            headers: {
+              'Content-Type': 'application/json',
+            },
+          });
+      
+          setSuma(response.data);
+          setSegundoPaso(true);
         } catch (error) {
-            console.error('Error fetching data:', error);
         }
-    };
+      };      
 
-    const fetchEmisores = async () => {
+      const fetchEmisores = async () => {
         try {
-            const response = await fetch('http://localhost:9000/emisores');
-            const data = await response.json();
-            setEmisores(data);
+          const response = await api.get('/emisores');
+          setEmisores(response.data);
         } catch (error) {
-            console.error('Error fetching emisores:', error);
         }
-    };
+      };
 
     useEffect(() => {
         if (open) {

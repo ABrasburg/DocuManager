@@ -13,6 +13,8 @@ import {
   useToast,
 } from '@chakra-ui/react';
 
+import api from '../../../api';
+
 interface Emisor {
   id: number;
   tipo_doc: string;
@@ -41,21 +43,12 @@ const ModificarEmisor: React.FC<Props> = ({ open, onClose, emisor, editar, nuevo
   const handleEdit = async (event: React.FormEvent) => {
     event.preventDefault();
     try {
-      const response = await fetch(`http://localhost:9000/emisor/${old_cuit}`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          tipo_doc,
-          denominacion,
-          cuit,
-        }),
+      const response = await api.put(`/emisor/${old_cuit}`, {
+        tipo_doc,
+        denominacion,
+        cuit,
       });
-      if (!response.ok) {
-        throw new Error('Network response was not ok');
-      }
-      const data = await response.json();
+  
       toast({
         title: 'Emisor modificado.',
         description: 'El emisor ha sido modificado correctamente.',
@@ -63,7 +56,8 @@ const ModificarEmisor: React.FC<Props> = ({ open, onClose, emisor, editar, nuevo
         duration: 3000,
         isClosable: true,
       });
-      onEdit(data); // Invoca la función onEdit con los nuevos datos
+  
+      onEdit(response.data);
       onClose();
     } catch (error) {
       toast({
@@ -73,31 +67,22 @@ const ModificarEmisor: React.FC<Props> = ({ open, onClose, emisor, editar, nuevo
         duration: 3000,
         isClosable: true,
       });
-      console.error('Error:', error);
     }
-  };
+  };  
 
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
+    
     if (editar) {
       await handleEdit(event);
     } else {
       try {
-        const response = await fetch('http://localhost:9000/emisor', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            tipo_doc,
-            cuit,
-            denominacion,
-          }),
+        const response = await api.post('/emisor', {
+          tipo_doc,
+          cuit,
+          denominacion,
         });
-        if (!response.ok) {
-          throw new Error('Network response was not ok');
-        }
-        const data = await response.json();
+  
         toast({
           title: 'Emisor creado.',
           description: 'El emisor ha sido creado correctamente.',
@@ -105,7 +90,8 @@ const ModificarEmisor: React.FC<Props> = ({ open, onClose, emisor, editar, nuevo
           duration: 3000,
           isClosable: true,
         });
-        onCreate(data); // Invoca la función onCreate con los nuevos datos
+  
+        onCreate(response.data);
         onClose();
       } catch (error) {
         toast({
@@ -115,10 +101,9 @@ const ModificarEmisor: React.FC<Props> = ({ open, onClose, emisor, editar, nuevo
           duration: 3000,
           isClosable: true,
         });
-        console.error('Error:', error);
       }
     }
-  };
+  };  
 
   useEffect(() => {
     setTipoDoc(emisor.tipo_doc);

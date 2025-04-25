@@ -1,0 +1,12 @@
+Abrí el archivo hosts.
+
+    En Linux/Mac: /etc/hosts
+
+    En Windows: C:\Windows\System32\drivers\etc\hosts
+
+Agregá una línea como esta:
+
+    192.168.0.123    mipagina.local
+    Guardá y luego podés acceder desde el navegador a:
+
+    http://mipagina.local:5173

@@ -7,6 +7,8 @@ import  '../Comprobantes/gestor_comprobantes.css';
 import Navbar from '../Utils/navbar';
 import ModificarEmisor from './Popup/modificar_emisor';
 
+import api from '../../api';
+
 interface Emisor {
   id: number;
   tipo_doc: string;
@@ -26,18 +28,14 @@ const GestorEmisores: React.FC = () => {
     const fetchEmisores = async () => {
         setLoading(true);
         try {
-        const response = await fetch('http://localhost:9000/emisores');
-        if (!response.ok) {
-            throw new Error('Network response was not ok');
-        }
-        const data = await response.json();
-        setEmisores(data);
+          const response = await api.get('/emisores');
+          setEmisores(response.data);
         } catch (error) {
-        message.error('Error fetching emisores');
+          message.error('Error fetching emisores');
         } finally {
-        setLoading(false);
+          setLoading(false);
         }
-    };
+      };      
 
     useEffect(() => {
         fetchEmisores();
@@ -74,6 +72,7 @@ const GestorEmisores: React.FC = () => {
                     rowKey="id"
                     dataSource={emisores}
                     loading={loading}
+                    size="middle"
                     columns={[
                         { title: 'CUIT', dataIndex: 'cuit', key: 'cuit' },
                         { title: 'Denominación', dataIndex: 'denominacion', key: 'denominacion' },
