@@ -186,44 +186,44 @@ const GestorZetas: React.FC = () => {
         <div className="p-6 flex justify-center">
             <Navbar />
             <h1 style={{ fontSize: '24px', fontWeight: 'bold', textAlign: 'center', marginBottom: '20px' }}>
-                Gestor de Zetas
+            Gestor de Zetas
             </h1>
             <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '20px' }}>
-                <Button type="primary" onClick={() => handleCreate()}>
-                    Crear Zeta
-                </Button>
-                <Button type="primary" icon={<DownloadOutlined />} onClick={() => message.info('Descarga iniciada')}>
-                    Descargar
-                </Button>
+            <Button type="primary" onClick={() => handleCreate()}>
+                Crear Zeta
+            </Button>
+            <Button type="primary" icon={<DownloadOutlined />} onClick={() => message.info('Descarga iniciada')}>
+                Descargar
+            </Button>
             </div>
             <Spin spinning={loading} tip="Cargando Zetas...">
-                <Table<Zeta> columns={columns} dataSource={zetas} size="middle" />
+            <Table<Zeta> columns={columns} dataSource={zetas} size="middle" />
             </Spin>
             <ModificarZeta
-                open={mostrarUtilizarZeta}
-                onClose={() => {
-                    setCrear(false);
-                    setEditar(false);
-                    setLoading(false);
-                    setMostrarUtilizarZeta(false);
-                    fetchZetas();
-                    setZeta({
-                        id: 0,
-                        fecha: Date.now(),
-                        numero: 0,
-                        ultimo_ticket: 0,
-                        exento: 0,
-                        iva: 0,
-                        gravado: 0,
-                        cuenta_corriente: '',
-                        total: 0,
-                    });
-                }}
-                zeta={zeta}
-                onCreate={handleCreate}
-                onEdit={handleUpdate}
-                editar={editar}
-                nuevo={crear}
+            open={mostrarUtilizarZeta}
+            onClose={() => {
+                setCrear(false);
+                setEditar(false);
+                setLoading(false);
+                setMostrarUtilizarZeta(false);
+                setZeta({
+                id: 0,
+                fecha: Date.now(),
+                numero: 0,
+                ultimo_ticket: 0,
+                exento: 0,
+                iva: 0,
+                gravado: 0,
+                cuenta_corriente: '',
+                total: 0,
+                });
+                fetchZetas();
+            }}
+            zeta={zeta}
+            onCreate={handleCreate}
+            onEdit={handleUpdate}
+            editar={editar}
+            nuevo={crear}
             />
         </div>
     );

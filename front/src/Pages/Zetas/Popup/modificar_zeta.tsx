@@ -11,6 +11,7 @@ import {
   Input,
   Button,
   useToast,
+  Divider,
 } from '@chakra-ui/react';
 
 import  api from '../../../api';
@@ -83,9 +84,34 @@ const ModificarZeta: React.FC<Props> = ({ open, onClose, zeta, editar, nuevo, on
     } finally {
       onClose();
     }
-  };  
+  };
+  
+  const validateCreate = () => {
+    if (!fecha || !numero || !ultimo_ticket || !exento || !iva || !gravado || !cuenta_corriente || !total) {
+      toast({
+        title: 'Error.',
+        description: "Todos los campos son obligatorios.",
+        status: 'error',
+        duration: 9000,
+        isClosable: true,
+      });
+      return false;
+    }
+    if (exento < 0) {
+      toast({
+        title: 'Error.',
+        description: "El campo Exento no puede ser negativo.",
+        status: 'error',
+        duration: 9000,
+        isClosable: true,
+      });
+      return false;
+    }
+    return true;
+  };
 
   const handleCreate = async (event: React.FormEvent) => {
+    if (!validateCreate()) return;
     event.preventDefault();
     try {
       const response = await api.post('/zeta', {
@@ -137,9 +163,9 @@ const ModificarZeta: React.FC<Props> = ({ open, onClose, zeta, editar, nuevo, on
   return (
     <Modal isOpen={open} onClose={onClose} size="lg">
       <ModalOverlay />
-      <ModalContent>
+      <ModalContent maxHeight="90vh" display="flex" flexDirection="column">
         <ModalHeader>{editar ? 'Modificar Zeta' : 'Crear Zeta'}</ModalHeader>
-        <ModalBody>
+        <ModalBody overflowY="auto">
             <FormControl isRequired>
             <FormLabel>Fecha</FormLabel>
             <Input
@@ -164,47 +190,65 @@ const ModificarZeta: React.FC<Props> = ({ open, onClose, zeta, editar, nuevo, on
               onChange={(e) => setUltimoTicket(Number(e.target.value))}
             />
           </FormControl>
-          <FormControl isRequired mt={4}>
+            <FormControl isRequired mt={4}>
             <FormLabel>Exento</FormLabel>
             <Input
               type="number"
               value={exento}
-              onChange={(e) => setExento(Number(e.target.value))}
+              isReadOnly
             />
-          </FormControl>
-          <FormControl isRequired mt={4}>
+            </FormControl>
+            <FormControl isRequired mt={4}>
             <FormLabel>IVA</FormLabel>
             <Input
               type="number"
               value={iva}
-              onChange={(e) => setIva(Number(e.target.value))}
+              onChange={(e) => {
+              const newIva = Number(e.target.value);
+              setIva(newIva);
+              const newGravado = (newIva / 0.21) + newIva;
+              setGravado(newGravado);
+              const newExento = total - newGravado - Number(cuenta_corriente);
+              setExento(newExento);
+              }}
             />
-          </FormControl>
-          <FormControl isRequired mt={4}>
+            </FormControl>
+            <FormControl isRequired mt={4}>
             <FormLabel>Gravado</FormLabel>
             <Input
               type="number"
               value={gravado}
-              onChange={(e) => setGravado(Number(e.target.value))}
+              isReadOnly
             />
-          </FormControl>
-          <FormControl isRequired mt={4}>
+            </FormControl>
+            <FormControl isRequired mt={4}>
             <FormLabel>Cuenta Corriente</FormLabel>
             <Input
               type="text"
               value={cuenta_corriente}
-              onChange={(e) => setCuentaCorriente(e.target.value)}
+              onChange={(e) => {
+              const newCuentaCorriente = e.target.value;
+              setCuentaCorriente(newCuentaCorriente);
+              const newExento = total - gravado - Number(newCuentaCorriente);
+              setExento(newExento);
+              }}
             />
-          </FormControl>
-          <FormControl isRequired mt={4}>
+            </FormControl>
+            <FormControl isRequired mt={4}>
             <FormLabel>Total</FormLabel>
             <Input
               type="number"
               value={total}
-              onChange={(e) => setTotal(Number(e.target.value))}
+              onChange={(e) => {
+              const newTotal = Number(e.target.value);
+              setTotal(newTotal);
+              const newExento = newTotal - gravado - Number(cuenta_corriente);
+              setExento(newExento);
+              }}
             />
-          </FormControl>
+            </FormControl>
         </ModalBody>
+        <Divider />
         <ModalFooter>
           <Button colorScheme="blue" mr={3} onClick={editar ? handleEdit : handleCreate}>
             {editar ? 'Modificar' : 'Crear'}
