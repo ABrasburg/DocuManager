@@ -17,3 +17,12 @@ class IdZetaRepo:
         self.db.commit()
         self.db.refresh(db_id_zeta)
         return db_id_zeta
+    
+    def sumar_contador(self):
+        id_zeta = self.get_id_zeta()
+        if not id_zeta:
+            raise HTTPException(status_code=404, detail="IdZeta not found")
+        id_zeta.contador += 1
+        self.db.commit()
+        self.db.refresh(id_zeta)
+        return id_zeta
