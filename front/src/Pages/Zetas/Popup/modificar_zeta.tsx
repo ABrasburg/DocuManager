@@ -19,6 +19,7 @@ import  api from '../../../api';
 interface Zeta {
     id: number;
     fecha: number;
+    punto_venta: number;
     numero: number;
     ultimo_ticket: number;
     exento: number;
@@ -40,6 +41,7 @@ interface Props {
   
 const ModificarZeta: React.FC<Props> = ({ open, onClose, zeta, editar, nuevo, onCreate, onEdit }) => {
   const [fecha, setFecha] = useState<number>(zeta.fecha);
+  const [punto_venta, setPuntoVenta] = useState<number>(zeta.numero);
   const [numero, setNumero] = useState<number>(zeta.numero);
   const [ultimo_ticket, setUltimoTicket] = useState<number>(zeta.ultimo_ticket);
   const [exento, setExento] = useState<number>(zeta.exento);
@@ -55,6 +57,7 @@ const ModificarZeta: React.FC<Props> = ({ open, onClose, zeta, editar, nuevo, on
     try {
       const response = await api.put(`/zeta/${zeta.id}`, {
         fecha,
+        punto_venta,
         numero,
         ultimo_ticket,
         exento,
@@ -87,7 +90,7 @@ const ModificarZeta: React.FC<Props> = ({ open, onClose, zeta, editar, nuevo, on
   };
   
   const validateCreate = () => {
-    if (!fecha || !numero || !ultimo_ticket || !exento || !iva || !gravado || !cuenta_corriente || !total) {
+    if (!fecha || !punto_venta || !numero || !ultimo_ticket || !exento || !iva || !gravado || !cuenta_corriente || !total) {
       toast({
         title: 'Error.',
         description: "Todos los campos son obligatorios.",
@@ -116,6 +119,7 @@ const ModificarZeta: React.FC<Props> = ({ open, onClose, zeta, editar, nuevo, on
     try {
       const response = await api.post('/zeta', {
         fecha: new Date(fecha).toISOString().split('T')[0],
+        punto_venta,
         numero,
         ultimo_ticket,
         exento,
@@ -149,6 +153,7 @@ const ModificarZeta: React.FC<Props> = ({ open, onClose, zeta, editar, nuevo, on
   useEffect(() => {
     if (editar) {
       setFecha(zeta.fecha);
+      setPuntoVenta(zeta.punto_venta);
       setNumero(zeta.numero);
       setUltimoTicket(zeta.ultimo_ticket);
       setExento(zeta.exento);
@@ -156,6 +161,16 @@ const ModificarZeta: React.FC<Props> = ({ open, onClose, zeta, editar, nuevo, on
       setGravado(zeta.gravado);
       setCuentaCorriente(zeta.cuenta_corriente);
       setTotal(zeta.total);
+    } else if (nuevo) {
+      setFecha(Date.now());
+      setPuntoVenta(0);
+      setNumero(0);
+      setUltimoTicket(0);
+      setExento(0);
+      setIva(0);
+      setGravado(0);
+      setCuentaCorriente('');
+      setTotal(0);
     }
   }
   , [editar, zeta]);
@@ -174,6 +189,14 @@ const ModificarZeta: React.FC<Props> = ({ open, onClose, zeta, editar, nuevo, on
               onChange={(e) => setFecha(new Date(e.target.value).getTime())}
             />
             </FormControl>
+            <FormControl isRequired mt={4}>
+            <FormLabel>Punto de venta</FormLabel>
+            <Input
+              type="number"
+              value={punto_venta}
+              onChange={(e) => setNumero(Number(e.target.value))}
+            />
+          </FormControl>
           <FormControl isRequired mt={4}>
             <FormLabel>Número</FormLabel>
             <Input
@@ -207,9 +230,9 @@ const ModificarZeta: React.FC<Props> = ({ open, onClose, zeta, editar, nuevo, on
               const newIva = Number(e.target.value);
               setIva(newIva);
               const newGravado = (newIva / 0.21) + newIva;
-              setGravado(newGravado);
+              setGravado(parseFloat(newGravado.toFixed(2)));
               const newExento = total - newGravado - Number(cuenta_corriente);
-              setExento(newExento);
+              setExento(parseFloat(newExento.toFixed(2)));
               }}
             />
             </FormControl>
@@ -230,7 +253,7 @@ const ModificarZeta: React.FC<Props> = ({ open, onClose, zeta, editar, nuevo, on
               const newCuentaCorriente = e.target.value;
               setCuentaCorriente(newCuentaCorriente);
               const newExento = total - gravado - Number(newCuentaCorriente);
-              setExento(newExento);
+              setExento(parseFloat(newExento.toFixed(2)));
               }}
             />
             </FormControl>
@@ -243,7 +266,7 @@ const ModificarZeta: React.FC<Props> = ({ open, onClose, zeta, editar, nuevo, on
               const newTotal = Number(e.target.value);
               setTotal(newTotal);
               const newExento = newTotal - gravado - Number(cuenta_corriente);
-              setExento(newExento);
+              setExento(parseFloat(newExento.toFixed(2)));
               }}
             />
             </FormControl>
