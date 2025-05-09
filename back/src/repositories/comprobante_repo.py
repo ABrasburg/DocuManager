@@ -4,10 +4,6 @@ from fastapi import HTTPException
 from src.models.comprobante import Comprobante
 from src.schemas.comprobante_schema import ComprobanteCreate
 
-from  src.repositories.emisor_repo import EmisorRepo
-from src.models.emisor import Emisor
-
-
 class ComprobanteRepo:
     def __init__(self, db: Session):
         self.db = db
