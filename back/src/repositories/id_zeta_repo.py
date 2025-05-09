@@ -8,8 +8,11 @@ class IdZetaRepo:
     def __init__(self, db: Session):
         self.db = db
 
-    def get_id_zeta(self):
-        return self.db.query(IdZeta).first()
+    def get_by_id(self, id: int):
+        id_zeta = self.db.query(IdZeta).filter(IdZeta.id == id).first()
+        if not id_zeta:
+            raise HTTPException(status_code=404, detail="IdZeta not found")
+        return id_zeta
     
     def create_id_zeta(self, id_zeta: ZetaCreate):
         db_id_zeta = IdZeta(**id_zeta)
@@ -18,8 +21,8 @@ class IdZetaRepo:
         self.db.refresh(db_id_zeta)
         return db_id_zeta
     
-    def sumar_contador(self):
-        id_zeta = self.get_id_zeta()
+    def sumar_contador(self, id: int):
+        id_zeta = self.db.query(IdZeta).filter(IdZeta.id == id).first()
         if not id_zeta:
             raise HTTPException(status_code=404, detail="IdZeta not found")
         id_zeta.contador += 1

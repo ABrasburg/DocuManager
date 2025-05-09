@@ -7,8 +7,8 @@ class ZetaBase(BaseModel):
     fecha: datetime
     numero: int
     punto_de_venta: int
-    id_ocho: Optional[int]
-    id_nueve: Optional[int]
+    id_ocho: Optional[int] = -1
+    id_nueve: Optional[int] = -1
     ultimo_ticket: int
     exento: float
     iva: float
