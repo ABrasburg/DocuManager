@@ -19,7 +19,7 @@ import  api from '../../../api';
 interface Zeta {
     id: number;
     fecha: number;
-    punto_venta: number;
+    punto_de_venta: number;
     numero: number;
     ultimo_ticket: number;
     exento: number;
@@ -41,7 +41,7 @@ interface Props {
   
 const ModificarZeta: React.FC<Props> = ({ open, onClose, zeta, editar, nuevo, onCreate, onEdit }) => {
   const [fecha, setFecha] = useState<number>(zeta.fecha);
-  const [punto_venta, setPuntoVenta] = useState<number>(zeta.numero);
+  const [punto_de_venta, setPuntoVenta] = useState<number>(zeta.numero);
   const [numero, setNumero] = useState<number>(zeta.numero);
   const [ultimo_ticket, setUltimoTicket] = useState<number>(zeta.ultimo_ticket);
   const [exento, setExento] = useState<number>(zeta.exento);
@@ -57,7 +57,7 @@ const ModificarZeta: React.FC<Props> = ({ open, onClose, zeta, editar, nuevo, on
     try {
       const response = await api.put(`/zeta/${zeta.id}`, {
         fecha,
-        punto_venta,
+        punto_de_venta,
         numero,
         ultimo_ticket,
         exento,
@@ -90,7 +90,7 @@ const ModificarZeta: React.FC<Props> = ({ open, onClose, zeta, editar, nuevo, on
   };
   
   const validateCreate = () => {
-    if (!fecha || !punto_venta || !numero || !ultimo_ticket || !exento || !iva || !gravado || !cuenta_corriente || !total) {
+    if (!fecha || !punto_de_venta || !numero || !ultimo_ticket || !exento || !iva || !gravado || !cuenta_corriente || !total) {
       toast({
         title: 'Error.',
         description: "Todos los campos son obligatorios.",
@@ -119,7 +119,7 @@ const ModificarZeta: React.FC<Props> = ({ open, onClose, zeta, editar, nuevo, on
     try {
       const response = await api.post('/zeta', {
         fecha: new Date(fecha).toISOString().split('T')[0],
-        punto_venta,
+        punto_de_venta,
         numero,
         ultimo_ticket,
         exento,
@@ -153,7 +153,7 @@ const ModificarZeta: React.FC<Props> = ({ open, onClose, zeta, editar, nuevo, on
   useEffect(() => {
     if (editar) {
       setFecha(zeta.fecha);
-      setPuntoVenta(zeta.punto_venta);
+      setPuntoVenta(zeta.punto_de_venta);
       setNumero(zeta.numero);
       setUltimoTicket(zeta.ultimo_ticket);
       setExento(zeta.exento);
@@ -173,108 +173,119 @@ const ModificarZeta: React.FC<Props> = ({ open, onClose, zeta, editar, nuevo, on
       setTotal(0);
     }
   }
-  , [editar, zeta]);
+  , [editar, nuevo, zeta]);
 
   return (
     <Modal isOpen={open} onClose={onClose} size="lg">
       <ModalOverlay />
       <ModalContent maxHeight="90vh" display="flex" flexDirection="column">
-        <ModalHeader>{editar ? 'Modificar Zeta' : 'Crear Zeta'}</ModalHeader>
+      <ModalHeader>{editar ? 'Modificar Zeta' : 'Crear Zeta'}</ModalHeader>
         <ModalBody overflowY="auto">
-            <FormControl isRequired>
+          <FormControl isRequired>
             <FormLabel>Fecha</FormLabel>
             <Input
               type="date"
               value={new Date(fecha).toISOString().split('T')[0]}
               onChange={(e) => setFecha(new Date(e.target.value).getTime())}
             />
-            </FormControl>
-            <FormControl isRequired mt={4}>
+          </FormControl>
+          <FormControl isRequired mt={4}>
             <FormLabel>Punto de venta</FormLabel>
             <Input
               type="number"
-              value={punto_venta}
-              onChange={(e) => setNumero(Number(e.target.value))}
+              value={punto_de_venta || ''}
+              onChange={(e) => setPuntoVenta(e.target.value === '' ? NaN : Number(e.target.value))}
             />
           </FormControl>
           <FormControl isRequired mt={4}>
-            <FormLabel>Número</FormLabel>
-            <Input
-              type="number"
-              value={numero}
+            <FormLabel>Numero de Zeta</FormLabel>
+            <select
+              value={numero || ''}
               onChange={(e) => setNumero(Number(e.target.value))}
-            />
+              style={{
+                width: '100%',
+                padding: '8px',
+                borderRadius: '4px',
+                border: '1px solid #ccc',
+              }}
+            >
+              <option value="" disabled>
+                Seleccionar número de Zeta
+              </option>
+              <option value={8}>8</option>
+              <option value={9}>9</option>
+            </select>
           </FormControl>
           <FormControl isRequired mt={4}>
             <FormLabel>Último Ticket</FormLabel>
             <Input
               type="number"
-              value={ultimo_ticket}
-              onChange={(e) => setUltimoTicket(Number(e.target.value))}
+              value={ultimo_ticket || ''}
+              onChange={(e) => setUltimoTicket(e.target.value === '' ? NaN : Number(e.target.value))}
             />
           </FormControl>
-            <FormControl isRequired mt={4}>
+          <FormControl isRequired mt={4}>
             <FormLabel>Exento</FormLabel>
             <Input
               type="number"
-              value={exento}
+              value={exento || ''}
               isReadOnly
             />
-            </FormControl>
-            <FormControl isRequired mt={4}>
+          </FormControl>
+          <FormControl isRequired mt={4}>
             <FormLabel>IVA</FormLabel>
             <Input
               type="number"
-              value={iva}
+              value={iva || ''}
               onChange={(e) => {
-              const newIva = Number(e.target.value);
+              const newIva = e.target.value === '' ? NaN : Number(e.target.value);
               setIva(newIva);
               const newGravado = (newIva / 0.21) + newIva;
               setGravado(parseFloat(newGravado.toFixed(2)));
-              const newExento = total - newGravado - Number(cuenta_corriente);
+              const newExento = total - newGravado - Number(cuenta_corriente || 0);
               setExento(parseFloat(newExento.toFixed(2)));
               }}
             />
-            </FormControl>
-            <FormControl isRequired mt={4}>
+          </FormControl>
+          <FormControl isRequired mt={4}>
             <FormLabel>Gravado</FormLabel>
             <Input
               type="number"
-              value={gravado}
+              value={gravado || ''}
               isReadOnly
             />
-            </FormControl>
-            <FormControl isRequired mt={4}>
+          </FormControl>
+          <FormControl isRequired mt={4}>
             <FormLabel>Cuenta Corriente</FormLabel>
             <Input
               type="text"
-              value={cuenta_corriente}
+              value={cuenta_corriente || ''}
               onChange={(e) => {
               const newCuentaCorriente = e.target.value;
               setCuentaCorriente(newCuentaCorriente);
-              const newExento = total - gravado - Number(newCuentaCorriente);
+              const newExento = total - gravado - Number(newCuentaCorriente || 0);
               setExento(parseFloat(newExento.toFixed(2)));
               }}
             />
-            </FormControl>
-            <FormControl isRequired mt={4}>
+          </FormControl>
+          <FormControl isRequired mt={4}>
             <FormLabel>Total</FormLabel>
             <Input
               type="number"
-              value={total}
+              value={total || ''}
               onChange={(e) => {
-              const newTotal = Number(e.target.value);
+              const newTotal = e.target.value === '' ? NaN : Number(e.target.value);
               setTotal(newTotal);
-              const newExento = newTotal - gravado - Number(cuenta_corriente);
+              const newExento = newTotal - gravado - Number(cuenta_corriente || 0);
               setExento(parseFloat(newExento.toFixed(2)));
               }}
             />
-            </FormControl>
+          </FormControl>
         </ModalBody>
         <Divider />
         <ModalFooter>
           <Button colorScheme="blue" mr={3} onClick={editar ? handleEdit : handleCreate}>
-            {editar ? 'Modificar' : 'Crear'}
+          {editar ? 'Modificar' : 'Crear'}
           </Button>
           <Button variant="ghost" onClick={onClose}>Cancelar</Button>
         </ModalFooter>

@@ -12,7 +12,7 @@ import  api from '../../api';
 interface Zeta {
     id: number;
     fecha: number;
-    punto_venta: number;
+    punto_de_venta: number;
     numero: number;
     ultimo_ticket: number;
     exento: number;
@@ -30,7 +30,7 @@ const GestorZetas: React.FC = () => {
     const [zeta, setZeta] = useState<Zeta>({
         id: 0,
         fecha: Date.now(),
-        punto_venta: 0,
+        punto_de_venta: 0,
         numero: 0,
         ultimo_ticket: 0,
         exento: 0,
@@ -75,7 +75,7 @@ const GestorZetas: React.FC = () => {
         setZeta({
             id: 0,
             fecha: Date.now(),
-            punto_venta: 0,
+            punto_de_venta: 0,
             numero: 0,
             ultimo_ticket: 0,
             exento: 0,
@@ -110,6 +110,7 @@ const GestorZetas: React.FC = () => {
             title: 'Fecha', 
             dataIndex: 'fecha', 
             key: 'fecha',
+            render: (text: number) => dayjs(text).format('DD/MM/YYYY'),
             filterDropdown: ({ setSelectedKeys, selectedKeys, confirm, clearFilters }: any) => (
             <div style={{ padding: 8 }}>
                 <DatePicker.RangePicker
@@ -212,7 +213,7 @@ const GestorZetas: React.FC = () => {
                 setZeta({
                 id: 0,
                 fecha: Date.now(),
-                punto_venta: 0,
+                punto_de_venta: 0,
                 numero: 0,
                 ultimo_ticket: 0,
                 exento: 0,

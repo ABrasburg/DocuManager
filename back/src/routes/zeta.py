@@ -13,12 +13,12 @@ zeta = APIRouter(tags=["Zeta"])
 def create_zeta(zeta_data: zeta_schema.ZetaCreate, db: Session = Depends(get_db)):
     zeta_repo = ZetaRepo(db)
     id_zeta_repo = IdZetaRepo(db)
-    id_zeta = id_zeta_repo.get_by_id(zeta_data.punto_de_venta)
-    if zeta_data.punto_de_venta == 8:
+    id_zeta = id_zeta_repo.get_by_id(zeta_data.numero)
+    if zeta_data.numero == 8:
         zeta_data.id_ocho = id_zeta.contador
-    elif zeta_data.punto_de_venta == 9:
+    elif zeta_data.numero == 9:
         zeta_data.id_nueve = id_zeta.contador
-    id_zeta_repo.sumar_contador(zeta_data.punto_de_venta)
+    id_zeta_repo.modify_to_last_ticket(zeta_data.numero, zeta_data.ultimo_ticket)
     return zeta_repo.create_zeta(zeta_data)
 
 @zeta.get("/zeta/{id}", response_model=zeta_schema.Zeta)

@@ -21,11 +21,9 @@ class IdZetaRepo:
         self.db.refresh(db_id_zeta)
         return db_id_zeta
     
-    def sumar_contador(self, id: int):
-        id_zeta = self.db.query(IdZeta).filter(IdZeta.id == id).first()
-        if not id_zeta:
-            raise HTTPException(status_code=404, detail="IdZeta not found")
-        id_zeta.contador += 1
+    def modify_to_last_ticket(self, id: int, ultimo_ticket: int):
+        id_zeta = self.get_by_id(id)
+        id_zeta.contador = ultimo_ticket+1
         self.db.commit()
         self.db.refresh(id_zeta)
         return id_zeta
