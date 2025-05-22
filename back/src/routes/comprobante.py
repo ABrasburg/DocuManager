@@ -284,7 +284,6 @@ async def download_comprobantes(
     fecha_fin: str,
     db: Session = Depends(get_db),
 ):
-    print(f"Descargando comprobantes desde {fecha_inicio} hasta {fecha_fin}")
     """
     Descarga los comprobantes filtrados por fechas en formato CSV.
     """
@@ -331,7 +330,7 @@ async def download_comprobantes(
     df.to_csv(csv_buffer, index=False, sep=';', decimal=',', quotechar='"')
     csv_buffer.seek(0)
 
-    filename = f"comprobantes_{fecha_inicio}_to_{fecha_fin}.csv"
+    filename = f"comprobantes_{fecha_inicio}_a_{fecha_fin}.csv"
     
     return StreamingResponse(
         iter([csv_buffer.getvalue()]),

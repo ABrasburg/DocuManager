@@ -6,6 +6,7 @@ import '@inovua/reactdatagrid-community/index.css';
 
 import Navbar from '../Utils/navbar';
 import ModificarZeta from './Popup/modificar_zeta';
+import DescargarZetas from './Popup/descargar_zetas';
 
 import  api from '../../api';
 
@@ -44,6 +45,7 @@ const GestorZetas: React.FC = () => {
     const [fechaFinFiltro, setFechaFinFiltro] = useState<string | null>(null);
 
     const [mostrarUtilizarZeta, setMostrarUtilizarZeta] = useState(false);
+    const [mostrarDescargarZetas, setMostrarDescargarZetas] = useState(false);
 
     useEffect(() => {
         fetchZetas();
@@ -196,7 +198,7 @@ const GestorZetas: React.FC = () => {
             <Button type="primary" onClick={() => handleCreate()}>
                 Crear Zeta
             </Button>
-            <Button type="primary" icon={<DownloadOutlined />} onClick={() => message.info('Descarga iniciada')}>
+            <Button type="primary" icon={<DownloadOutlined />} onClick={() => setMostrarDescargarZetas(true)}>
                 Descargar
             </Button>
             </div>
@@ -229,6 +231,12 @@ const GestorZetas: React.FC = () => {
             onEdit={handleUpdate}
             editar={editar}
             nuevo={crear}
+            />
+            <DescargarZetas
+            open={mostrarDescargarZetas}
+            onClose={() => {
+                setMostrarDescargarZetas(false);
+            }}
             />
         </div>
     );
