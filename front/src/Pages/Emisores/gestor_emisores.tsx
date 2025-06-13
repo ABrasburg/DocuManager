@@ -14,6 +14,7 @@ interface Emisor {
   tipo_doc: string;
   cuit: string;
   denominacion: string;
+  cuenta_corriente: boolean;
 }
 
 const GestorEmisores: React.FC = () => {
@@ -21,7 +22,7 @@ const GestorEmisores: React.FC = () => {
     const [loading, setLoading] = useState(false);
     const [crear, setCrear] = useState(false);
     const [editar, setEditar] = useState(false);
-    const [emisor, setEmisor] = useState<Emisor>({ id: 0, tipo_doc: '', cuit: '', denominacion: '' });
+    const [emisor, setEmisor] = useState<Emisor>({ id: 0, tipo_doc: '', cuit: '', denominacion: '', cuenta_corriente: false });
 
     const [mostrarEmisor, setMostrarEmisor] = useState(false);
     
@@ -96,7 +97,7 @@ const GestorEmisores: React.FC = () => {
                     setLoading(false);
                     setMostrarEmisor(false);
                     fetchEmisores();
-                    setEmisor({ id: 0, tipo_doc: '', cuit: '', denominacion: '' });
+                    setEmisor({ id: 0, tipo_doc: '', cuit: '', denominacion: '', cuenta_corriente: false });
                 }}
                 emisor={emisor}
                 onCreate={handleCreate}

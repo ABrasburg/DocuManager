@@ -10,5 +10,6 @@ class Emisor(Base):
     tipo_doc = Column(String, nullable=False)
     cuit = Column(Integer, unique=True, nullable=False)
     denominacion = Column(String, nullable=False)
+    cuenta_corriente = Column(Boolean, nullable=False)
 
     comprobantes = relationship("Comprobante", back_populates="emisor")

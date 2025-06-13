@@ -5,6 +5,7 @@ class EmisorBase(BaseModel):
     cuit: int
     tipo_doc: str
     denominacion: str
+    cuenta_corriente: bool = False
 
 
 class EmisorCreate(EmisorBase):

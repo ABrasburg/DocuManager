@@ -20,6 +20,7 @@ interface Emisor {
   tipo_doc: string;
   cuit: string;
   denominacion: string;
+  cuenta_corriente: boolean;
 }
 
 interface Props {
