@@ -37,3 +37,10 @@ class EmisorRepo:
         self.db.commit()
         self.db.refresh(db_emisor)
         return db_emisor
+    
+    def set_cuenta_corriente(self, cuit: int, cuenta_corriente: bool):
+        db_emisor = self.db.query(Emisor).filter(Emisor.cuit == cuit).first()
+        db_emisor.cuenta_corriente = cuenta_corriente
+        self.db.commit()
+        self.db.refresh(db_emisor)
+        return db_emisor

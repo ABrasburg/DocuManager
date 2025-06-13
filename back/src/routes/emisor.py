@@ -33,3 +33,10 @@ def update_emisor(cuit: int, emisor: schemas.EmisorCreate, db: Session = Depends
     if not db_emisor:
         raise HTTPException(status_code=404, detail="Emisor not found")
     return repo.EmisorRepo(db).update_emisor(cuit, emisor)
+
+@emisor.put("/emisor/{cuit}/cuenta_corriente", response_model=schemas.Emisor)
+def set_cuenta_corriente(cuit: int, cuenta_corriente: bool, db: Session = Depends(get_db)):
+    db_emisor = repo.EmisorRepo(db).get_emisor(cuit)
+    if not db_emisor:
+        raise HTTPException(status_code=404, detail="Emisor not found")
+    return repo.EmisorRepo(db).set_cuenta_corriente(cuit, cuenta_corriente)
