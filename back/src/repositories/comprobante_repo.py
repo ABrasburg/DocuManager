@@ -1,5 +1,6 @@
 from sqlalchemy.orm import Session
 from fastapi import HTTPException
+from datetime import datetime
 
 from src.models.comprobante import Comprobante
 from src.schemas.comprobante_schema import ComprobanteCreate
@@ -43,7 +44,72 @@ class ComprobanteRepo:
         return self.db.query(Comprobante).filter(Comprobante.tipo_comprobante == tipo_comprobante).all()
     
     def get_comprobantes_by_fechas(self, fecha_inicio: str, fecha_fin: str):
-        return self.db.query(Comprobante).filter(Comprobante.fecha_emision >= fecha_inicio, Comprobante.fecha_emision <= fecha_fin).all()
+        # Convertir a datetime
+        fecha_inicio_dt = datetime.strptime(fecha_inicio, "%d/%m/%Y")
+        fecha_fin_dt = datetime.strptime(fecha_fin, "%d/%m/%Y")
+
+        comprobantes = self.db.query(Comprobante).all()
+
+        resultado = []
+        for c in comprobantes:
+            try:
+                # Primero intentar formato YYYY-MM-DD (formato ISO)
+                try:
+                    fecha_c = datetime.strptime(c.fecha_emision, "%Y-%m-%d")
+                except ValueError:
+                    # Si falla, intentar formato DD/MM/YYYY
+                    fecha_c = datetime.strptime(c.fecha_emision, "%d/%m/%Y")
+                
+                if fecha_inicio_dt <= fecha_c <= fecha_fin_dt:
+                    resultado.append(c)
+            except Exception:
+                continue  # Ignorar comprobantes con fecha inválida
+
+        return resultado
     
     def get_comprobantes_by_emisor_and_fechas(self, emisor_id: int, fecha_inicio: str, fecha_fin: str):
         return self.db.query(Comprobante).filter(Comprobante.emisor_id == emisor_id, Comprobante.fecha_emision >= fecha_inicio, Comprobante.fecha_emision <= fecha_fin).all()
+    
+    def get_comprobantes_by_emisor(self, emisor_id: int):
+        return self.db.query(Comprobante).filter(Comprobante.emisor_id == emisor_id).all()
+    
+    def get_comprobantes_by_cuenta_corriente(self):
+        from src.models.emisor import Emisor
+        return self.db.query(Comprobante).join(Emisor).filter(Emisor.cuenta_corriente == True).all()
+    
+    def get_comprobantes_by_cuenta_corriente_and_fechas(self, fecha_inicio: str, fecha_fin: str):
+        from src.models.emisor import Emisor
+        # Convertir a datetime
+        fecha_inicio_dt = datetime.strptime(fecha_inicio, "%d/%m/%Y")
+        fecha_fin_dt = datetime.strptime(fecha_fin, "%d/%m/%Y")
+
+        comprobantes = self.db.query(Comprobante).join(Emisor).filter(Emisor.cuenta_corriente == True).all()
+
+        resultado = []
+        for c in comprobantes:
+            try:
+                # Primero intentar formato YYYY-MM-DD (formato ISO)
+                try:
+                    fecha_c = datetime.strptime(c.fecha_emision, "%Y-%m-%d")
+                except ValueError:
+                    # Si falla, intentar formato DD/MM/YYYY
+                    fecha_c = datetime.strptime(c.fecha_emision, "%d/%m/%Y")
+                
+                if fecha_inicio_dt <= fecha_c <= fecha_fin_dt:
+                    resultado.append(c)
+            except Exception:
+                continue  # Ignorar comprobantes con fecha inválida
+
+        return resultado
+    
+    def marcar_como_pagado(self, id: int, fecha_pago: str, numero_ticket: str):
+        db_comprobante = self.db.query(Comprobante).filter(Comprobante.id == id).first()
+        if db_comprobante is None:
+            raise HTTPException(status_code=404, detail="Comprobante no encontrado")
+        
+        db_comprobante.fecha_pago = fecha_pago
+        db_comprobante.numero_ticket = numero_ticket
+        
+        self.db.commit()
+        self.db.refresh(db_comprobante)
+        return db_comprobante

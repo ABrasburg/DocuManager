@@ -17,10 +17,16 @@ class ComprobanteBase(BaseModel):
     otros_tributos: float
     iva: float
     total: float
+    fecha_pago: Optional[str] = None
+    numero_ticket: Optional[str] = None
 
 class ComprobanteCreate(ComprobanteBase):
     emisor: EmisorCreate
     tipo_comprobante: TipoComprobanteCreate 
+
+class ComprobantePago(BaseModel):
+    fecha_pago: str
+    numero_ticket: str
 
 class Comprobante(ComprobanteBase):
     id: int

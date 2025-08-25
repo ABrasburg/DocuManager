@@ -228,7 +228,11 @@ const GestorComprobantes: React.FC = () => {
       title: 'Total',
       dataIndex: 'total',
       key: 'total',
-      render: (total: number) => `$${total?.toFixed(2) || '0.00'}`,
+      render: (total: number, record: Comprobante) => {
+        const signo = record.tipo_comprobante?.nombre === "Nota de Crédito" ? -1 : 1;
+        const totalConSigno = signo * (total || 0);
+        return `$${totalConSigno.toFixed(2)}`;
+      },
     },
     {
         title: 'Acciones',

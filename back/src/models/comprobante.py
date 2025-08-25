@@ -19,6 +19,10 @@ class Comprobante(Base):
     otros_tributos = Column(Float, nullable=False)
     iva = Column(Float, nullable=False)
     total = Column(Float, nullable=False)
+    
+    # Campos para marcar como pagado en cuenta corriente
+    fecha_pago = Column(String, nullable=True)
+    numero_ticket = Column(String, nullable=True)
 
     emisor_id = Column(Integer, ForeignKey("emisor.id"))
     emisor = relationship("Emisor", back_populates="comprobantes", lazy='joined')

@@ -12,6 +12,8 @@ from src.schemas.archivo_comprobante_schema import ArchivoComprobanteCreate
 from src.repositories.emisor_repo import EmisorRepo
 from db import get_db
 
+from datetime import datetime
+
 comprobante = APIRouter(tags=["Comprobante"])
 
 
@@ -185,7 +187,8 @@ async def upload_comprobantes(
         )
         create_archivo_comprobante(archivo_comprobante, db)
     except Exception as e:
-        raise HTTPException(500, detail=f"Ya se cargo el archivo: {str(file.filename)}")
+        pass
+        # raise HTTPException(500, detail=f"Ya se cargo el archivo: {str(file.filename)}")
     try:
         contents = await file.read()
         content_str = contents.decode('utf-8-sig')
@@ -200,8 +203,6 @@ async def upload_comprobantes(
         )
 
         required_columns = {
-            "Fecha de Emisión",
-            "Tipo de Comprobante",
             "Punto de Venta",
             "Número Desde",
             "Número Hasta",
@@ -287,8 +288,16 @@ async def download_comprobantes(
     """
     Descarga los comprobantes filtrados por fechas en formato CSV.
     """
+    try:
+        fecha_inicio_dt = datetime.strptime(fecha_inicio, "%Y-%m-%d")
+        fecha_fin_dt = datetime.strptime(fecha_fin, "%Y-%m-%d")
+        fecha_inicio_fmt = fecha_inicio_dt.strftime("%d/%m/%Y")
+        fecha_fin_fmt = fecha_fin_dt.strftime("%d/%m/%Y")
+    except ValueError:
+        raise HTTPException(status_code=400, detail="Formato de fecha inválido")
+
     comprobantes = repo.ComprobanteRepo(db).get_comprobantes_by_fechas(
-        fecha_inicio, fecha_fin
+        fecha_inicio_fmt, fecha_fin_fmt
     )
 
     if not comprobantes:
@@ -305,8 +314,25 @@ async def download_comprobantes(
         emisor = next(
             (e for e in emisores if e.id == comprobante.emisor_id), None
         )
+        signo = -1 if tipo_comprobante and tipo_comprobante.nombre == "Nota de Crédito" else 1
+        
+        # Formatear fecha a DD/MM/YYYY
+        fecha_formateada = comprobante.fecha_emision
+        try:
+            # Intentar parsear desde formato YYYY-MM-DD
+            fecha_dt = datetime.strptime(comprobante.fecha_emision, "%Y-%m-%d")
+            fecha_formateada = fecha_dt.strftime("%d/%m/%Y")
+        except ValueError:
+            # Si ya está en formato DD/MM/YYYY, mantenerlo
+            try:
+                datetime.strptime(comprobante.fecha_emision, "%d/%m/%Y")
+                fecha_formateada = comprobante.fecha_emision
+            except ValueError:
+                # Si no es ninguno de los formatos esperados, usar tal como está
+                pass
+        
         data.append({
-            "Fecha de Emisión": comprobante.fecha_emision,
+            "Fecha de Emisión": fecha_formateada,
             "Tipo de Comprobante": tipo_comprobante.nombre if tipo_comprobante else "",
             "Punto de Venta": comprobante.punto_venta,
             "Número Desde": comprobante.numero_desde,
@@ -317,12 +343,12 @@ async def download_comprobantes(
             "Denominación Emisor": emisor.denominacion if emisor else "",
             "Tipo Cambio": comprobante.tipo_cambio,
             "Moneda": comprobante.moneda,
-            "Imp. Neto Gravado": comprobante.neto_gravado,
-            "Imp. Neto No Gravado": comprobante.neto_no_gravado,
-            "Imp. Op. Exentas": comprobante.exento,
-            "IVA": comprobante.iva,
-            "Otros Tributos": comprobante.otros_tributos,
-            "Imp. Total": comprobante.total,
+            "Imp. Neto Gravado": signo * (comprobante.neto_gravado or 0),
+            "Imp. Neto No Gravado": signo * (comprobante.neto_no_gravado or 0),
+            "Imp. Op. Exentas": signo * (comprobante.exento or 0),
+            "IVA": signo * (comprobante.iva or 0),
+            "Otros Tributos": signo * (comprobante.otros_tributos or 0),
+            "Imp. Total": signo * (comprobante.total or 0),
         })
 
     csv_buffer = StringIO()
@@ -337,3 +363,113 @@ async def download_comprobantes(
         media_type="text/csv",
         headers={"Content-Disposition": f"attachment; filename={filename}"}
     )
+
+@comprobante.get("/comprobantes/cuenta_corriente")
+def get_comprobantes_cuenta_corriente(
+    db: Session = Depends(get_db)
+):
+    """
+    Obtiene los comprobantes que tienen cuenta corriente habilitada.
+    """
+    return repo.ComprobanteRepo(db).get_comprobantes_by_cuenta_corriente()
+
+@comprobante.put("/comprobante/{id}/marcar_pagado", response_model=schemas.Comprobante)
+def marcar_comprobante_como_pagado(
+    id: int, 
+    pago_data: schemas.ComprobantePago, 
+    db: Session = Depends(get_db)
+):
+    """
+    Marca un comprobante como pagado con fecha y número de ticket
+    """
+    return repo.ComprobanteRepo(db).marcar_como_pagado(
+        id, pago_data.fecha_pago, pago_data.numero_ticket
+    )
+
+@comprobante.get("/comprobantes/cuenta_corriente/download")
+async def download_comprobantes_cuenta_corriente(
+    fecha_inicio: str,
+    fecha_fin: str,
+    db: Session = Depends(get_db),
+):
+    """
+    Descarga los comprobantes de cuenta corriente filtrados por fechas en formato CSV.
+    """
+    try:
+        fecha_inicio_dt = datetime.strptime(fecha_inicio, "%Y-%m-%d")
+        fecha_fin_dt = datetime.strptime(fecha_fin, "%Y-%m-%d")
+        fecha_inicio_fmt = fecha_inicio_dt.strftime("%d/%m/%Y")
+        fecha_fin_fmt = fecha_fin_dt.strftime("%d/%m/%Y")
+    except ValueError:
+        raise HTTPException(status_code=400, detail="Formato de fecha inválido")
+
+    comprobantes = repo.ComprobanteRepo(db).get_comprobantes_by_cuenta_corriente_and_fechas(
+        fecha_inicio_fmt, fecha_fin_fmt
+    )
+
+    if not comprobantes:
+        raise HTTPException(status_code=404, detail="No se encontraron comprobantes de cuenta corriente")
+    
+    tipos_comprobante = TipoComprobanteRepo(db).get_tipos_comprobantes()
+    emisores = EmisorRepo(db).get_emisores()
+
+    data = []
+    for comprobante in comprobantes:
+        tipo_comprobante = next(
+            (t for t in tipos_comprobante if t.id == comprobante.tipo_comprobante_id), None
+        )
+        emisor = next(
+            (e for e in emisores if e.id == comprobante.emisor_id), None
+        )
+        signo = -1 if tipo_comprobante and tipo_comprobante.nombre == "Nota de Crédito" else 1
+        
+        # Formatear fecha a DD/MM/YYYY
+        fecha_formateada = comprobante.fecha_emision
+        try:
+            # Intentar parsear desde formato YYYY-MM-DD
+            fecha_dt = datetime.strptime(comprobante.fecha_emision, "%Y-%m-%d")
+            fecha_formateada = fecha_dt.strftime("%d/%m/%Y")
+        except ValueError:
+            # Si ya está en formato DD/MM/YYYY, mantenerlo
+            try:
+                datetime.strptime(comprobante.fecha_emision, "%d/%m/%Y")
+                fecha_formateada = comprobante.fecha_emision
+            except ValueError:
+                # Si no es ninguno de los formatos esperados, usar tal como está
+                pass
+        
+        data.append({
+            "Fecha de Emisión": fecha_formateada,
+            "Tipo de Comprobante": tipo_comprobante.nombre if tipo_comprobante else "",
+            "Punto de Venta": comprobante.punto_venta,
+            "Número Desde": comprobante.numero_desde,
+            "Número Hasta": comprobante.numero_hasta,
+            "Cód. Autorización": comprobante.cod_autorizacion,
+            "Tipo Doc. Emisor": emisor.tipo_doc if emisor else "",
+            "Nro. Doc. Emisor": emisor.cuit if emisor else "",
+            "Denominación Emisor": emisor.denominacion if emisor else "",
+            "Tipo Cambio": comprobante.tipo_cambio,
+            "Moneda": comprobante.moneda,
+            "Imp. Neto Gravado": signo * (comprobante.neto_gravado or 0),
+            "Imp. Neto No Gravado": signo * (comprobante.neto_no_gravado or 0),
+            "Imp. Op. Exentas": signo * (comprobante.exento or 0),
+            "IVA": signo * (comprobante.iva or 0),
+            "Otros Tributos": signo * (comprobante.otros_tributos or 0),
+            "Imp. Total": signo * (comprobante.total or 0),
+            "Fecha Pago": comprobante.fecha_pago or "",
+            "Número Ticket": comprobante.numero_ticket or "",
+        })
+
+    csv_buffer = StringIO()
+    df = pd.DataFrame(data)
+    df.to_csv(csv_buffer, index=False, sep=';', decimal=',', quotechar='"')
+    csv_buffer.seek(0)
+
+    filename = f"cuenta_corriente_{fecha_inicio}_a_{fecha_fin}.csv"
+    
+    return StreamingResponse(
+        iter([csv_buffer.getvalue()]),
+        media_type="text/csv",
+        headers={"Content-Disposition": f"attachment; filename={filename}"}
+    )
+
