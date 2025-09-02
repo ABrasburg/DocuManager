@@ -228,6 +228,10 @@ async def upload_comprobantes(
         resultados = []
         for index, row in df.iterrows():
             try:
+                # Determinar si es nota de crédito para hacer los importes negativos
+                es_nota_credito = row["Tipo de Comprobante"] == "Nota de Crédito"
+                multiplicador = -1 if es_nota_credito else 1
+                
                 comprobante_data = schemas.ComprobanteCreate(
                     fecha_emision=row["Fecha de Emisión"],
                     punto_venta=int(row["Punto de Venta"]),
@@ -236,20 +240,20 @@ async def upload_comprobantes(
                     cod_autorizacion=int(row["Cód. Autorización"]),
                     tipo_cambio=float(row["Tipo Cambio"]),
                     moneda=row["Moneda"],
-                    neto_gravado=float(row["Imp. Neto Gravado"]),
-                    neto_no_gravado=float(row["Imp. Neto No Gravado"]),
-                    exento=float(row["Imp. Op. Exentas"]),
-                    otros_tributos=float(row["Otros Tributos"]),
-                    iva=float(row["IVA"]),
-                    total=float(row["Imp. Total"]),
+                    neto_gravado=float(row["Imp. Neto Gravado"]) * multiplicador,
+                    neto_no_gravado=float(row["Imp. Neto No Gravado"]) * multiplicador,
+                    exento=float(row["Imp. Op. Exentas"]) * multiplicador,
+                    otros_tributos=float(row["Otros Tributos"]) * multiplicador,
+                    iva=float(row["IVA"]) * multiplicador,
+                    total=float(row["Imp. Total"]) * multiplicador,
                     emisor=schemas.EmisorCreate(
                         cuit=row["Nro. Doc. Emisor"],
                         denominacion=row["Denominación Emisor"],
                         tipo_doc=str(row["Tipo Doc. Emisor"]),
                     ),
                     tipo_comprobante=schemas.TipoComprobanteCreate(
-                        tipo_comprobante=int(row["Tipo de Comprobante"]),
-                        nombre=f"Tipo-{int(row["Tipo de Comprobante"])}", # Si no existe igual no lo crea
+                        tipo_comprobante=1 if row["Tipo de Comprobante"] == "Factura" else (3 if row["Tipo de Comprobante"] == "Nota de Crédito" else int(row["Tipo de Comprobante"])),
+                        nombre=f"Tipo-{1 if row['Tipo de Comprobante'] == 'Factura' else (3 if row['Tipo de Comprobante'] == 'Nota de Crédito' else int(row['Tipo de Comprobante']))}", # Si no existe igual no lo crea
                     ),
                 )
 
