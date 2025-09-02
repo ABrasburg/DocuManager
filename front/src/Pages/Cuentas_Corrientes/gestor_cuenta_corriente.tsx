@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import { Table, Button, message, Upload, DatePicker, Space, Spin, Tag } from 'antd';
+import { Table, Button, message, DatePicker, Space, Spin, Tag } from 'antd';
 import { SettingOutlined, DownloadOutlined, DollarOutlined } from "@ant-design/icons";
 import dayjs from 'dayjs';
 import '@inovua/reactdatagrid-community/index.css';
 
 import api from  '../../api'
+import { formatCurrency } from '../../Utils/formatNumber'
 
 import Navbar from '../Utils/navbar';
 import SetCuentaCorriente from './Popup/set_cuenta_corrientes';
@@ -217,7 +218,7 @@ const GestorCuentaCorriente: React.FC = () => {
           render: (total: number, record: Comprobante) => {
             const signo = record.tipo_comprobante?.nombre === "Nota de Crédito" ? -1 : 1;
             const totalConSigno = signo * (total || 0);
-            return `$${totalConSigno.toFixed(2)}`;
+            return formatCurrency(totalConSigno);
           },
         },
         {

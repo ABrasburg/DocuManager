@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
 import { Modal, Form, Input, DatePicker, Button, message } from 'antd';
-import dayjs from 'dayjs';
 import api from '../../../api';
 
 interface MarcarPagadoProps {

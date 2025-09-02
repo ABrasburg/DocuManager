@@ -35,6 +35,7 @@ const Navbar: React.FC = () => {
         <Link to="/gestor_cuenta_corriente" className="navbar-link">Cuenta Corriente</Link>
         <Link to="/gestor_zetas" className="navbar-link">Zetas</Link>
         <Link to="/gestor_comprobantes" className="navbar-link">Comprobantes</Link>
+        <Link to="/reporte_afip" className="navbar-link">Reporte AFIP</Link>
       </div>
     </nav>
   );

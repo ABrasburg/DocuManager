@@ -10,6 +10,7 @@ from src.repositories.tipo_comprobante_repo import TipoComprobanteRepo
 from src.routes.archivo_comprobante import create_archivo_comprobante
 from src.schemas.archivo_comprobante_schema import ArchivoComprobanteCreate
 from src.repositories.emisor_repo import EmisorRepo
+from src.repositories.zeta_repo import ZetaRepo
 from db import get_db
 
 from datetime import datetime
@@ -217,16 +218,13 @@ async def upload_comprobantes(
                 detail=f"El archivo CSV no tiene las columnas requeridas. Faltan: {missing}",
             )
 
-        # Encontrar el número hasta máximo en el CSV para validar duplicados
         max_numero_hasta = df["Número Hasta"].astype(int).max()
         
-        # Importar el repositorio de archivo_comprobante para la validación
         from src.repositories.archivo_comprobante_repo import ArchivoComprobanteRepo
         archivo_repo = ArchivoComprobanteRepo(db)
         
         resultados = []
         
-        # Validar si ya existe un archivo con este número hasta máximo
         if archivo_repo.exists_archivo_by_numero_hasta(max_numero_hasta):
             resultados.append({
                 "fila": 0, 
@@ -237,7 +235,6 @@ async def upload_comprobantes(
                 "mensaje": f"Archivo rechazado por duplicado. Errores: 1",
                 "detalles": resultados,
             }
-        # Crear repositorio de comprobantes para validar duplicados individuales
         comprobante_repo = repo.ComprobanteRepo(db)
         
         for index, row in df.iterrows():
@@ -246,7 +243,6 @@ async def upload_comprobantes(
                 numero_desde = int(row["Número Desde"])
                 numero_hasta = int(row["Número Hasta"])
                 
-                # Verificar si ya existe un comprobante con este número_desde
                 if comprobante_repo.exists_comprobante_by_numero(punto_venta, numero_desde, numero_hasta):
                     resultados.append({
                         "fila": index + 1, 
@@ -255,7 +251,6 @@ async def upload_comprobantes(
                     })
                     continue
                 
-                # Determinar si es nota de crédito para hacer los importes negativos
                 es_nota_credito = row["Tipo de Comprobante"] == "Nota de Crédito"
                 multiplicador = -1 if es_nota_credito else 1
                 
@@ -301,7 +296,6 @@ async def upload_comprobantes(
         exitos = sum(1 for r in resultados if r["estado"] == "éxito")
         errores = len(resultados) - exitos
         
-        # Si hubo éxitos, registrar el archivo procesado con el numero_hasta máximo
         if exitos > 0:
             try:
                 archivo_comprobante = ArchivoComprobanteCreate(
@@ -310,7 +304,7 @@ async def upload_comprobantes(
                 )
                 create_archivo_comprobante(archivo_comprobante, db)
             except Exception as e:
-                pass  # Si falla el registro del archivo, no afecta el procesamiento
+                pass
 
         return {
             "mensaje": f"Procesado completo. Éxitos: {exitos}, Errores: {errores}",
@@ -517,4 +511,80 @@ async def download_comprobantes_cuenta_corriente(
         media_type="text/csv",
         headers={"Content-Disposition": f"attachment; filename={filename}"}
     )
+
+@comprobante.get("/comprobantes/reporte_afip")
+async def generar_reporte_afip(
+    fecha_inicio: str,
+    fecha_fin: str,
+    db: Session = Depends(get_db),
+):
+    """
+    Genera un reporte estilo AFIP comparando Compras (Comprobantes) vs Ventas (Zetas)
+    """
+    try:
+        fecha_inicio_dt = datetime.strptime(fecha_inicio, "%Y-%m-%d")
+        fecha_fin_dt = datetime.strptime(fecha_fin, "%Y-%m-%d")
+        fecha_inicio_fmt = fecha_inicio_dt.strftime("%d/%m/%Y")
+        fecha_fin_fmt = fecha_fin_dt.strftime("%d/%m/%Y")
+        cantidad_dias = (fecha_fin_dt - fecha_inicio_dt).days + 1
+    except ValueError:
+        raise HTTPException(status_code=400, detail="Formato de fecha inválido. Use YYYY-MM-DD")
+
+    comprobante_repo = repo.ComprobanteRepo(db)
+    zeta_repo = ZetaRepo(db)
+    
+    comprobantes = comprobante_repo.get_comprobantes_by_fechas(fecha_inicio_fmt, fecha_fin_fmt)
+    compras_exento = sum(c.exento or 0 for c in comprobantes)
+    compras_gravado = sum(c.neto_gravado or 0 for c in comprobantes)
+    compras_iva = sum(c.iva or 0 for c in comprobantes)
+    compras_subtotal = compras_exento + compras_gravado + compras_iva
+    
+    try:
+        zetas = zeta_repo.get_zetas_by_fechas(fecha_inicio_fmt, fecha_fin_fmt)
+    except AttributeError:
+        zetas = zeta_repo.get_zetas()
+        zetas_filtradas = []
+        for z in zetas:
+            try:
+                fecha_z = z.fecha.strftime("%d/%m/%Y") if hasattr(z.fecha, 'strftime') else str(z.fecha)
+                fecha_z_dt = datetime.strptime(fecha_z.split()[0], "%d/%m/%Y") if ' ' in str(fecha_z) else datetime.strptime(fecha_z, "%d/%m/%Y")
+                if fecha_inicio_dt <= fecha_z_dt <= fecha_fin_dt:
+                    zetas_filtradas.append(z)
+            except:
+                continue
+        zetas = zetas_filtradas
+    
+    ventas_exento = sum(z.exento or 0 for z in zetas)
+    ventas_gravado = sum(z.gravado or 0 for z in zetas)
+    ventas_iva = sum(z.iva or 0 for z in zetas)
+    ventas_total = sum(z.total or 0 for z in zetas)
+    
+    diferencia_gravado = ventas_gravado - compras_gravado
+    diferencia_total = ventas_total - compras_subtotal
+    
+    reporte = {
+        "periodo": {
+            "fecha_inicio": fecha_inicio,
+            "fecha_fin": fecha_fin,
+            "cantidad_dias": cantidad_dias
+        },
+        "compras": {
+            "subtotal_exento": round(compras_exento, 2),
+            "subtotal_gravado": round(compras_gravado, 2),
+            "iva": round(compras_iva, 2),
+            "subtotal": round(compras_subtotal, 2)
+        },
+        "ventas": {
+            "exento": round(ventas_exento, 2),
+            "gravado": round(ventas_gravado, 2),
+            "total": round(ventas_total, 2)
+        },
+        "diferencia": {
+            "cantidad_dias": cantidad_dias,
+            "gravado": round(diferencia_gravado, 2),
+            "total": round(diferencia_total, 2)
+        }
+    }
+    
+    return reporte
 

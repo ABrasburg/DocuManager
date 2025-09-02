@@ -9,6 +9,7 @@ import ModificarZeta from './Popup/modificar_zeta';
 import DescargarZetas from './Popup/descargar_zetas';
 
 import  api from '../../api';
+import { formatCurrency } from '../../Utils/formatNumber';
 
 interface Zeta {
     id: number;
@@ -165,11 +166,36 @@ const GestorZetas: React.FC = () => {
         },
         { title: 'Número', dataIndex: 'numero', key: 'numero' },
         { title: 'Último Ticket', dataIndex: 'ultimo_ticket', key: 'ultimo_ticket' },
-        { title: 'Exento', dataIndex: 'exento', key: 'exento' },
-        { title: 'IVA', dataIndex: 'iva', key: 'iva' },
-        { title: 'Gravado', dataIndex: 'gravado', key: 'gravado' },
-        { title: 'Cuenta Corriente', dataIndex: 'cuenta_corriente', key: 'cuenta_corriente' },
-        { title: 'Total', dataIndex: 'total', key: 'total' },
+        { 
+            title: 'Exento', 
+            dataIndex: 'exento', 
+            key: 'exento',
+            render: (value: number) => formatCurrency(value)
+        },
+        { 
+            title: 'IVA', 
+            dataIndex: 'iva', 
+            key: 'iva',
+            render: (value: number) => formatCurrency(value)
+        },
+        { 
+            title: 'Gravado', 
+            dataIndex: 'gravado', 
+            key: 'gravado',
+            render: (value: number) => formatCurrency(value)
+        },
+        { 
+            title: 'Cuenta Corriente', 
+            dataIndex: 'cuenta_corriente', 
+            key: 'cuenta_corriente',
+            render: (value: number) => formatCurrency(value)
+        },
+        { 
+            title: 'Total', 
+            dataIndex: 'total', 
+            key: 'total',
+            render: (value: number) => formatCurrency(value)
+        },
         {
             title: 'Acciones',
             key: 'acciones',
