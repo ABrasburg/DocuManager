@@ -182,14 +182,6 @@ async def upload_comprobantes(
     if not file.filename.endswith(".csv"):
         raise HTTPException(400, detail="Solo se permiten archivos CSV")
     try:
-        archivo_comprobante = ArchivoComprobanteCreate(
-            nombre_archivo=file.filename,
-        )
-        create_archivo_comprobante(archivo_comprobante, db)
-    except Exception as e:
-        pass
-        # raise HTTPException(500, detail=f"Ya se cargo el archivo: {str(file.filename)}")
-    try:
         contents = await file.read()
         content_str = contents.decode('utf-8-sig')
         
@@ -225,18 +217,53 @@ async def upload_comprobantes(
                 detail=f"El archivo CSV no tiene las columnas requeridas. Faltan: {missing}",
             )
 
+        # Encontrar el número hasta máximo en el CSV para validar duplicados
+        max_numero_hasta = df["Número Hasta"].astype(int).max()
+        
+        # Importar el repositorio de archivo_comprobante para la validación
+        from src.repositories.archivo_comprobante_repo import ArchivoComprobanteRepo
+        archivo_repo = ArchivoComprobanteRepo(db)
+        
         resultados = []
+        
+        # Validar si ya existe un archivo con este número hasta máximo
+        if archivo_repo.exists_archivo_by_numero_hasta(max_numero_hasta):
+            resultados.append({
+                "fila": 0, 
+                "estado": "error", 
+                "error": f"El comprobante número {max_numero_hasta} ya se encuentra en el sistema."
+            })
+            return {
+                "mensaje": f"Archivo rechazado por duplicado. Errores: 1",
+                "detalles": resultados,
+            }
+        # Crear repositorio de comprobantes para validar duplicados individuales
+        comprobante_repo = repo.ComprobanteRepo(db)
+        
         for index, row in df.iterrows():
             try:
+                punto_venta = int(row["Punto de Venta"])
+                numero_desde = int(row["Número Desde"])
+                numero_hasta = int(row["Número Hasta"])
+                
+                # Verificar si ya existe un comprobante con este número_desde
+                if comprobante_repo.exists_comprobante_by_numero(punto_venta, numero_desde, numero_hasta):
+                    resultados.append({
+                        "fila": index + 1, 
+                        "estado": "error", 
+                        "error": f"El comprobante número {numero_desde} ya se encuentra en el sistema."
+                    })
+                    continue
+                
                 # Determinar si es nota de crédito para hacer los importes negativos
                 es_nota_credito = row["Tipo de Comprobante"] == "Nota de Crédito"
                 multiplicador = -1 if es_nota_credito else 1
                 
                 comprobante_data = schemas.ComprobanteCreate(
                     fecha_emision=row["Fecha de Emisión"],
-                    punto_venta=int(row["Punto de Venta"]),
-                    numero_desde=int(row["Número Desde"]),
-                    numero_hasta=int(row["Número Hasta"]),
+                    punto_venta=punto_venta,
+                    numero_desde=numero_desde,
+                    numero_hasta=numero_hasta,
                     cod_autorizacion=int(row["Cód. Autorización"]),
                     tipo_cambio=float(row["Tipo Cambio"]),
                     moneda=row["Moneda"],
@@ -258,6 +285,9 @@ async def upload_comprobantes(
                 )
 
                 response = create_comprobante(comprobante_data, db)
+                resultados.append(
+                    {"fila": index + 1, "estado": "éxito", "error": None}
+                )
 
             except HTTPException as e:
                 resultados.append(
@@ -270,6 +300,17 @@ async def upload_comprobantes(
 
         exitos = sum(1 for r in resultados if r["estado"] == "éxito")
         errores = len(resultados) - exitos
+        
+        # Si hubo éxitos, registrar el archivo procesado con el numero_hasta máximo
+        if exitos > 0:
+            try:
+                archivo_comprobante = ArchivoComprobanteCreate(
+                    nombre_archivo=file.filename,
+                    numero_hasta=max_numero_hasta
+                )
+                create_archivo_comprobante(archivo_comprobante, db)
+            except Exception as e:
+                pass  # Si falla el registro del archivo, no afecta el procesamiento
 
         return {
             "mensaje": f"Procesado completo. Éxitos: {exitos}, Errores: {errores}",

@@ -19,3 +19,6 @@ class ArchivoComprobanteRepo:
 
     def exists_archivo_comprobante(self, nombre_archivo: str):
         return self.db.query(ArchivosComprobantes).filter(ArchivosComprobantes.nombre_archivo == nombre_archivo).first() is not None
+    
+    def exists_archivo_by_numero_hasta(self, numero_hasta: int):
+        return self.db.query(ArchivosComprobantes).filter(ArchivosComprobantes.numero_hasta == numero_hasta).first() is not None

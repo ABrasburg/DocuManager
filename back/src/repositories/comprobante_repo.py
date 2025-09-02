@@ -113,3 +113,11 @@ class ComprobanteRepo:
         self.db.commit()
         self.db.refresh(db_comprobante)
         return db_comprobante
+    
+    def exists_comprobante_by_numero(self, punto_venta: int, numero_desde: int, numero_hasta: int):
+        """Verifica si ya existe un comprobante con el mismo punto de venta y rango de números"""
+        return self.db.query(Comprobante).filter(
+            Comprobante.punto_venta == punto_venta,
+            Comprobante.numero_desde == numero_desde,
+            Comprobante.numero_hasta == numero_hasta
+        ).first() is not None

@@ -6,3 +6,4 @@ class ArchivosComprobantes(Base):
     __tablename__ = "archivos_comprobantes"
     id = Column(Integer, primary_key=True, index=True, autoincrement=True)
     nombre_archivo = Column(String, nullable=False)
+    numero_hasta = Column(Integer, nullable=True)
