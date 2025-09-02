@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Table, Button, message, Upload, DatePicker, Space, Spin } from 'antd';
+import { Table, Button, message, Upload, DatePicker, Space, Spin, Modal } from 'antd';
 import { UploadOutlined, DeleteOutlined, MoreOutlined, FormOutlined, DownloadOutlined } from "@ant-design/icons";
 import dayjs from 'dayjs';
 import '@inovua/reactdatagrid-community/index.css';
@@ -260,22 +260,31 @@ const GestorComprobantes: React.FC = () => {
             />
             <Button
               icon={<DeleteOutlined />}
-              onClick={async () => {
-                try {
-                  const response = await fetch(`http://localhost:9000/comprobante/${record.id}`, {
-                    method: 'DELETE',
-                  });
+              onClick={() => {
+                Modal.confirm({
+                  title: '¿Estás seguro?',
+                  content: 'Esta acción no se puede deshacer. El comprobante será eliminado permanentemente.',
+                  okText: 'Sí, eliminar',
+                  cancelText: 'Cancelar',
+                  okType: 'danger',
+                  onOk: async () => {
+                    try {
+                      const response = await fetch(`http://localhost:9000/comprobante/${record.id}`, {
+                        method: 'DELETE',
+                      });
 
-                  if (response.ok) {
-                    message.success('Comprobante eliminado');
-                    await fetchComprobantes();
-                  } else {
-                    const errorData = await response.json();
-                    message.error(`Error al eliminar: ${errorData.detail || 'Error desconocido'}`);
+                      if (response.ok) {
+                        message.success('Comprobante eliminado');
+                        await fetchComprobantes();
+                      } else {
+                        const errorData = await response.json();
+                        message.error(`Error al eliminar: ${errorData.detail || 'Error desconocido'}`);
+                      }
+                    } catch (error) {
+                      message.error('Error al eliminar comprobante');
+                    }
                   }
-                } catch (error) {
-                  message.error('Error al eliminar comprobante');
-                }
+                });
               }}
             />
             <Button

@@ -7,6 +7,7 @@ import '@inovua/reactdatagrid-community/index.css';
 import Navbar from '../Utils/navbar';
 import ModificarZeta from './Popup/modificar_zeta';
 import DescargarZetas from './Popup/descargar_zetas';
+import { Modal, ModalOverlay, ModalContent, ModalHeader, ModalFooter, ModalBody, Button as ChakraButton, useDisclosure } from '@chakra-ui/react';
 
 import  api from '../../api';
 import { formatCurrency } from '../../Utils/formatNumber';
@@ -47,6 +48,8 @@ const GestorZetas: React.FC = () => {
 
     const [mostrarUtilizarZeta, setMostrarUtilizarZeta] = useState(false);
     const [mostrarDescargarZetas, setMostrarDescargarZetas] = useState(false);
+    const { isOpen: isDeleteModalOpen, onOpen: onDeleteModalOpen, onClose: onDeleteModalClose } = useDisclosure();
+    const [zetaToDelete, setZetaToDelete] = useState<number | null>(null);
 
     useEffect(() => {
         fetchZetas();
@@ -95,18 +98,27 @@ const GestorZetas: React.FC = () => {
         setZeta(zetaEditar);
     };
 
-    const handleDelete = async (id: number) => {
+    const handleDelete = (id: number) => {
+        setZetaToDelete(id);
+        onDeleteModalOpen();
+    };
+
+    const confirmDelete = async () => {
+        if (!zetaToDelete) return;
+        
         setLoading(true);
         try {
-          await api.delete(`/zeta/${id}`);
-          message.success('Zeta eliminada');
-          fetchZetas();
+            await api.delete(`/zeta/${zetaToDelete}`);
+            message.success('Zeta eliminada');
+            fetchZetas();
         } catch (error) {
-          message.error('Error deleting data');
+            message.error('Error deleting data');
         } finally {
-          setLoading(false);
+            setLoading(false);
+            setZetaToDelete(null);
+            onDeleteModalClose();
         }
-      };      
+    };      
 
     const columns = [
         { 
@@ -264,6 +276,23 @@ const GestorZetas: React.FC = () => {
                 setMostrarDescargarZetas(false);
             }}
             />
+            <Modal isOpen={isDeleteModalOpen} onClose={onDeleteModalClose}>
+                <ModalOverlay />
+                <ModalContent>
+                    <ModalHeader>¿Estás seguro?</ModalHeader>
+                    <ModalBody>
+                        Esta acción no se puede deshacer. La zeta será eliminada permanentemente.
+                    </ModalBody>
+                    <ModalFooter>
+                        <ChakraButton colorScheme="red" mr={3} onClick={confirmDelete}>
+                            Sí, eliminar
+                        </ChakraButton>
+                        <ChakraButton variant="ghost" onClick={onDeleteModalClose}>
+                            Cancelar
+                        </ChakraButton>
+                    </ModalFooter>
+                </ModalContent>
+            </Modal>
         </div>
     );
 };

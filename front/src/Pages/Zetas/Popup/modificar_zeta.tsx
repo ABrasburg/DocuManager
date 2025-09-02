@@ -195,6 +195,7 @@ const ModificarZeta: React.FC<Props> = ({ open, onClose, zeta, editar, nuevo, on
               type="number"
               value={punto_de_venta || ''}
               onChange={(e) => setPuntoVenta(e.target.value === '' ? NaN : Number(e.target.value))}
+              onWheel={(e) => e.currentTarget.blur()}
             />
           </FormControl>
           <FormControl isRequired mt={4}>
@@ -222,6 +223,7 @@ const ModificarZeta: React.FC<Props> = ({ open, onClose, zeta, editar, nuevo, on
               type="number"
               value={ultimo_ticket || ''}
               onChange={(e) => setUltimoTicket(e.target.value === '' ? NaN : Number(e.target.value))}
+              onWheel={(e) => e.currentTarget.blur()}
             />
           </FormControl>
           <FormControl isRequired mt={4}>
@@ -245,6 +247,7 @@ const ModificarZeta: React.FC<Props> = ({ open, onClose, zeta, editar, nuevo, on
               const newExento = total - newGravado - Number(cuenta_corriente || 0);
               setExento(parseFloat(newExento.toFixed(2)));
               }}
+              onWheel={(e) => e.currentTarget.blur()}
             />
           </FormControl>
           <FormControl isRequired mt={4}>
@@ -279,6 +282,7 @@ const ModificarZeta: React.FC<Props> = ({ open, onClose, zeta, editar, nuevo, on
               const newExento = newTotal - gravado - Number(cuenta_corriente || 0);
               setExento(parseFloat(newExento.toFixed(2)));
               }}
+              onWheel={(e) => e.currentTarget.blur()}
             />
           </FormControl>
         </ModalBody>
