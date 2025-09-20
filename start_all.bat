@@ -5,10 +5,10 @@ echo ========================================
 echo.
 
 echo Iniciando Backend...
-start "DocuManager Backend" /d "%~dp0back" start_backend.bat
+start "DocuManager Backend" "%~dp0back\start_backend.bat"
 
 echo Iniciando Frontend...
-start "DocuManager Frontend" /d "%~dp0front" start_frontend.bat
+start "DocuManager Frontend" "%~dp0front\start_frontend.bat"
 
 echo.
 echo Ambos servicios iniciados.
