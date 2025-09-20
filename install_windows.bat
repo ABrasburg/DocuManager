@@ -34,30 +34,34 @@ if not exist "nssm.exe" (
 )
 
 echo.
-echo 4. Creando servicio DocuManager Backend...
-nssm install DocuManagerBack pipenv
-nssm set DocuManagerBack Parameters "run python main.py"
-nssm set DocuManagerBack AppDirectory "%~dp0back"
+echo 4. Creando carpeta de logs...
+mkdir "%~dp0logs" 2>nul
+
+echo.
+echo 5. Creando servicio DocuManager Backend...
+nssm install DocuManagerBack "%~dp0back\start_backend.bat"
 nssm set DocuManagerBack DisplayName "DocuManager Backend"
 nssm set DocuManagerBack Description "Servicio backend para DocuManager - Sistema de gestion de comprobantes"
 nssm set DocuManagerBack Start SERVICE_AUTO_START
+nssm set DocuManagerBack AppStdout "%~dp0logs\backend_out.log"
+nssm set DocuManagerBack AppStderr "%~dp0logs\backend_err.log"
 
 echo.
-echo 5. Creando servicio DocuManager Frontend...
-nssm install DocuManagerFront node
-nssm set DocuManagerFront Parameters ".\node_modules\.bin\serve -s build -l 3000"
-nssm set DocuManagerFront AppDirectory "%~dp0front"
+echo 6. Creando servicio DocuManager Frontend...
+nssm install DocuManagerFront "%~dp0front\start_frontend.bat"
 nssm set DocuManagerFront DisplayName "DocuManager Frontend"
 nssm set DocuManagerFront Description "Servicio frontend para DocuManager"
 nssm set DocuManagerFront Start SERVICE_AUTO_START
+nssm set DocuManagerFront AppStdout "%~dp0logs\frontend_out.log"
+nssm set DocuManagerFront AppStderr "%~dp0logs\frontend_err.log"
 
 echo.
-echo 6. Configurando archivo hosts...
+echo 7. Configurando archivo hosts...
 echo # DocuManager Local Access >> C:\Windows\System32\drivers\etc\hosts
 echo 127.0.0.1 documanager.local >> C:\Windows\System32\drivers\etc\hosts
 
 echo.
-echo 7. Iniciando servicios...
+echo 8. Iniciando servicios...
 nssm start DocuManagerBack
 nssm start DocuManagerFront
 
