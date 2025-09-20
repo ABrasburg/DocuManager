@@ -13,19 +13,21 @@ if %errorlevel% neq 0 (
     exit /b 1
 )
 
-echo 1. Instalando dependencias Python...
-cd /d "%~dp0back"
-pip install pipenv
-pipenv install --deploy
+echo 1. Verificando archivos necesarios...
+if not exist "%~dp0back\start_backend.bat" (
+    echo ERROR: No se encuentra start_backend.bat en la carpeta back
+    pause
+    exit /b 1
+)
+if not exist "%~dp0front\start_frontend.bat" (
+    echo ERROR: No se encuentra start_frontend.bat en la carpeta front
+    pause
+    exit /b 1
+)
+echo Archivos encontrados correctamente.
 
 echo.
-echo 2. Instalando dependencias Node.js...
-cd /d "%~dp0front"
-npm install
-npm run build
-
-echo.
-echo 3. Descargando NSSM...
+echo 2. Verificando NSSM...
 cd /d "%~dp0"
 if not exist "nssm.exe" (
     echo Descarga NSSM manualmente desde: https://nssm.cc/download
@@ -34,11 +36,11 @@ if not exist "nssm.exe" (
 )
 
 echo.
-echo 4. Creando carpeta de logs...
+echo 3. Creando carpeta de logs...
 mkdir "%~dp0logs" 2>nul
 
 echo.
-echo 5. Creando servicio DocuManager Backend...
+echo 4. Creando servicio DocuManager Backend...
 nssm install DocuManagerBack "%~dp0back\start_backend.bat"
 nssm set DocuManagerBack DisplayName "DocuManager Backend"
 nssm set DocuManagerBack Description "Servicio backend para DocuManager - Sistema de gestion de comprobantes"
@@ -47,7 +49,7 @@ nssm set DocuManagerBack AppStdout "%~dp0logs\backend_out.log"
 nssm set DocuManagerBack AppStderr "%~dp0logs\backend_err.log"
 
 echo.
-echo 6. Creando servicio DocuManager Frontend...
+echo 5. Creando servicio DocuManager Frontend...
 nssm install DocuManagerFront "%~dp0front\start_frontend.bat"
 nssm set DocuManagerFront DisplayName "DocuManager Frontend"
 nssm set DocuManagerFront Description "Servicio frontend para DocuManager"
@@ -56,12 +58,12 @@ nssm set DocuManagerFront AppStdout "%~dp0logs\frontend_out.log"
 nssm set DocuManagerFront AppStderr "%~dp0logs\frontend_err.log"
 
 echo.
-echo 7. Configurando archivo hosts...
+echo 6. Configurando archivo hosts...
 echo # DocuManager Local Access >> C:\Windows\System32\drivers\etc\hosts
 echo 127.0.0.1 documanager.local >> C:\Windows\System32\drivers\etc\hosts
 
 echo.
-echo 8. Iniciando servicios...
+echo 7. Iniciando servicios...
 nssm start DocuManagerBack
 nssm start DocuManagerFront
 
