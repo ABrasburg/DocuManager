@@ -1,7 +1,7 @@
 from typing import List
 from fastapi import APIRouter, Depends, HTTPException, UploadFile, File
 from fastapi.responses import StreamingResponse
-import pandas as pd
+import csv
 from io import StringIO
 from sqlalchemy.orm import Session
 import src.schemas.comprobante_schema as schemas
@@ -186,14 +186,15 @@ async def upload_comprobantes(
         contents = await file.read()
         content_str = contents.decode('utf-8-sig')
         
-        df = pd.read_csv(
+        csv_reader = csv.DictReader(
             StringIO(content_str),
-            sep=';',
-            decimal=',',
-            quotechar='"',
-            engine='python',
-            on_bad_lines='warn'
+            delimiter=';',
+            quotechar='"'
         )
+
+        rows = list(csv_reader)
+        if not rows:
+            raise HTTPException(400, detail="El archivo CSV está vacío")
 
         required_columns = {
             "Punto de Venta",
@@ -211,14 +212,15 @@ async def upload_comprobantes(
             "IVA",
             "Imp. Total",
         }
-        if not required_columns.issubset(df.columns):
-            missing = required_columns - set(df.columns)
+
+        if not required_columns.issubset(set(rows[0].keys())):
+            missing = required_columns - set(rows[0].keys())
             raise HTTPException(
                 status_code=400,
                 detail=f"El archivo CSV no tiene las columnas requeridas. Faltan: {missing}",
             )
 
-        max_numero_hasta = df["Número Hasta"].astype(int).max()
+        max_numero_hasta = max(int(row["Número Hasta"]) for row in rows)
         
         from src.repositories.archivo_comprobante_repo import ArchivoComprobanteRepo
         archivo_repo = ArchivoComprobanteRepo(db)
@@ -237,8 +239,13 @@ async def upload_comprobantes(
             }
         comprobante_repo = repo.ComprobanteRepo(db)
         
-        for index, row in df.iterrows():
+        for index, row in enumerate(rows):
             try:
+                # Reemplazar comas por puntos en campos numéricos
+                for field in ["Tipo Cambio", "Imp. Neto Gravado", "Imp. Neto No Gravado", "Imp. Op. Exentas", "Otros Tributos", "IVA", "Imp. Total"]:
+                    if field in row and row[field]:
+                        row[field] = row[field].replace(',', '.')
+
                 punto_venta = int(row["Punto de Venta"])
                 numero_desde = int(row["Número Desde"])
                 numero_hasta = int(row["Número Hasta"])
@@ -311,9 +318,7 @@ async def upload_comprobantes(
             "detalles": resultados,
         }
 
-    except pd.errors.EmptyDataError:
-        raise HTTPException(400, detail="El archivo CSV está vacío")
-    except pd.errors.ParserError:
+    except csv.Error:
         raise HTTPException(400, detail="El archivo CSV no tiene un formato válido")
     except Exception as e:
         raise HTTPException(500, detail=f"Error al procesar el archivo: {str(e)}")
@@ -391,8 +396,19 @@ async def download_comprobantes(
         })
 
     csv_buffer = StringIO()
-    df = pd.DataFrame(data)
-    df.to_csv(csv_buffer, index=False, sep=';', decimal=',', quotechar='"')
+    if data:
+        fieldnames = data[0].keys()
+        writer = csv.DictWriter(csv_buffer, fieldnames=fieldnames, delimiter=';', quotechar='"', quoting=csv.QUOTE_NONNUMERIC)
+        writer.writeheader()
+        for row in data:
+            # Convertir números a formato con coma decimal
+            formatted_row = {}
+            for key, value in row.items():
+                if isinstance(value, (int, float)) and key.startswith('Imp.'):
+                    formatted_row[key] = str(value).replace('.', ',')
+                else:
+                    formatted_row[key] = value
+            writer.writerow(formatted_row)
     csv_buffer.seek(0)
 
     filename = f"comprobantes_{fecha_inicio}_a_{fecha_fin}.csv"
@@ -500,8 +516,19 @@ async def download_comprobantes_cuenta_corriente(
         })
 
     csv_buffer = StringIO()
-    df = pd.DataFrame(data)
-    df.to_csv(csv_buffer, index=False, sep=';', decimal=',', quotechar='"')
+    if data:
+        fieldnames = data[0].keys()
+        writer = csv.DictWriter(csv_buffer, fieldnames=fieldnames, delimiter=';', quotechar='"', quoting=csv.QUOTE_NONNUMERIC)
+        writer.writeheader()
+        for row in data:
+            # Convertir números a formato con coma decimal
+            formatted_row = {}
+            for key, value in row.items():
+                if isinstance(value, (int, float)) and key.startswith('Imp.'):
+                    formatted_row[key] = str(value).replace('.', ',')
+                else:
+                    formatted_row[key] = value
+            writer.writerow(formatted_row)
     csv_buffer.seek(0)
 
     filename = f"cuenta_corriente_{fecha_inicio}_a_{fecha_fin}.csv"

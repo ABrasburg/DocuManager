@@ -28,7 +28,7 @@ google-auth-httplib2 = "*"
 google-auth-oauthlib = "*"
 google-auth = "*"
 openpyxl = "*"
-pandas = "*"
+# pandas = "*"  # Reemplazado por CSV nativo para compatibilidad Windows 32-bit
 
 [dev-packages]
 
