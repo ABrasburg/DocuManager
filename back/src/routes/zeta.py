@@ -5,7 +5,7 @@ from sqlalchemy.orm import Session
 import src.schemas.zeta_schema as zeta_schema
 from src.repositories.zeta_repo import ZetaRepo
 from src.repositories.id_zeta_repo import IdZetaRepo
-import pandas as pd
+import csv
 from io import StringIO
 from db import get_db
 
@@ -88,8 +88,10 @@ async def download_zetas(
         ])
 
     csv_buffer = StringIO()
-    df = pd.DataFrame(data)
-    df.to_csv(csv_buffer, index=False)
+    if data:
+        # Escribir CSV sin headers (como estaba con pandas)
+        writer = csv.writer(csv_buffer)
+        writer.writerows(data)
     csv_buffer.seek(0)
     filename = f"zetas_{fecha_inicio}_a_{fecha_fin}.csv"
 
