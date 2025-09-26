@@ -241,7 +241,17 @@ async def upload_comprobantes(
                 detail=f"El archivo CSV no tiene las columnas requeridas. Faltan: {missing}",
             )
 
-        max_numero_hasta = max(int(row["Número Hasta"]) for row in rows)
+        # Función helper para safe_int (necesario antes del loop)
+        def safe_int_early(value, default=0):
+            """Convierte un valor a int, devolviendo default si está vacío o es None"""
+            if not value or value == '' or value is None:
+                return default
+            try:
+                return int(value)
+            except (ValueError, TypeError):
+                return default
+
+        max_numero_hasta = max(safe_int_early(row["Número Hasta"]) for row in rows if row.get("Número Hasta"))
         
         from src.repositories.archivo_comprobante_repo import ArchivoComprobanteRepo
         archivo_repo = ArchivoComprobanteRepo(db)
@@ -274,14 +284,33 @@ async def upload_comprobantes(
                     iva_field = "IVA"
                     numeric_fields = ["Tipo Cambio", "Imp. Neto Gravado", "Imp. Neto No Gravado", "Imp. Op. Exentas", "Otros Tributos", "IVA", "Imp. Total"]
 
+                # Función helper para convertir campos numéricos con manejo de valores nulos
+                def safe_float(value, default=0.0):
+                    """Convierte un valor a float, devolviendo default si está vacío o es None"""
+                    if not value or value == '' or value is None:
+                        return default
+                    try:
+                        return float(str(value).replace(',', '.'))
+                    except (ValueError, TypeError):
+                        return default
+
+                def safe_int(value, default=0):
+                    """Convierte un valor a int, devolviendo default si está vacío o es None"""
+                    if not value or value == '' or value is None:
+                        return default
+                    try:
+                        return int(value)
+                    except (ValueError, TypeError):
+                        return default
+
                 # Reemplazar comas por puntos en campos numéricos
                 for field in numeric_fields:
                     if field in row and row[field]:
                         row[field] = row[field].replace(',', '.')
 
-                punto_venta = int(row["Punto de Venta"])
-                numero_desde = int(row["Número Desde"])
-                numero_hasta = int(row["Número Hasta"])
+                punto_venta = safe_int(row["Punto de Venta"])
+                numero_desde = safe_int(row["Número Desde"])
+                numero_hasta = safe_int(row["Número Hasta"])
 
                 if comprobante_repo.exists_comprobante_by_numero(punto_venta, numero_desde, numero_hasta):
                     resultados.append({
@@ -299,23 +328,23 @@ async def upload_comprobantes(
                     punto_venta=punto_venta,
                     numero_desde=numero_desde,
                     numero_hasta=numero_hasta,
-                    cod_autorizacion=int(row["Cód. Autorización"]),
-                    tipo_cambio=float(row["Tipo Cambio"]),
+                    cod_autorizacion=safe_int(row["Cód. Autorización"]),
+                    tipo_cambio=safe_float(row["Tipo Cambio"], 1.0),
                     moneda=row["Moneda"],
-                    neto_gravado=float(row[neto_gravado_field]) * multiplicador,
-                    neto_no_gravado=float(row["Imp. Neto No Gravado"]) * multiplicador,
-                    exento=float(row["Imp. Op. Exentas"]) * multiplicador,
-                    otros_tributos=float(row["Otros Tributos"]) * multiplicador,
-                    iva=float(row[iva_field]) * multiplicador,
-                    total=float(row["Imp. Total"]) * multiplicador,
+                    neto_gravado=safe_float(row[neto_gravado_field]) * multiplicador,
+                    neto_no_gravado=safe_float(row["Imp. Neto No Gravado"]) * multiplicador,
+                    exento=safe_float(row["Imp. Op. Exentas"]) * multiplicador,
+                    otros_tributos=safe_float(row["Otros Tributos"]) * multiplicador,
+                    iva=safe_float(row[iva_field]) * multiplicador,
+                    total=safe_float(row["Imp. Total"]) * multiplicador,
                     emisor=schemas.EmisorCreate(
                         cuit=row["Nro. Doc. Emisor"],
                         denominacion=row["Denominación Emisor"],
                         tipo_doc=str(row["Tipo Doc. Emisor"]),
                     ),
                     tipo_comprobante=schemas.TipoComprobanteCreate(
-                        tipo_comprobante=1 if row["Tipo de Comprobante"] == "1" or row["Tipo de Comprobante"] == "Factura" else (3 if row["Tipo de Comprobante"] == "3" or row["Tipo de Comprobante"] == "Nota de Crédito" else int(row["Tipo de Comprobante"])),
-                        nombre=f"Tipo-{1 if row['Tipo de Comprobante'] == '1' or row['Tipo de Comprobante'] == 'Factura' else (3 if row['Tipo de Comprobante'] == '3' or row['Tipo de Comprobante'] == 'Nota de Crédito' else int(row['Tipo de Comprobante']))}", # Si no existe igual no lo crea
+                        tipo_comprobante=1 if row["Tipo de Comprobante"] == "1" or row["Tipo de Comprobante"] == "Factura" else (3 if row["Tipo de Comprobante"] == "3" or row["Tipo de Comprobante"] == "Nota de Crédito" else safe_int(row["Tipo de Comprobante"], 1)),
+                        nombre=f"Tipo-{1 if row['Tipo de Comprobante'] == '1' or row['Tipo de Comprobante'] == 'Factura' else (3 if row['Tipo de Comprobante'] == '3' or row['Tipo de Comprobante'] == 'Nota de Crédito' else safe_int(row['Tipo de Comprobante'], 1))}", # Si no existe igual no lo crea
                     ),
                 )
 
