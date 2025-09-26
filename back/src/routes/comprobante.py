@@ -196,7 +196,13 @@ async def upload_comprobantes(
         if not rows:
             raise HTTPException(400, detail="El archivo CSV está vacío")
 
-        required_columns = {
+        # Detectar formato de CSV basado en las columnas disponibles
+        columns = set(rows[0].keys())
+
+        # Columnas base requeridas en ambos formatos
+        base_required_columns = {
+            "Fecha de Emisión",
+            "Tipo de Comprobante",
             "Punto de Venta",
             "Número Desde",
             "Número Hasta",
@@ -206,15 +212,30 @@ async def upload_comprobantes(
             "Denominación Emisor",
             "Tipo Cambio",
             "Moneda",
-            "Imp. Neto Gravado",
             "Imp. Neto No Gravado",
             "Imp. Op. Exentas",
-            "IVA",
+            "Otros Tributos",
             "Imp. Total",
         }
 
-        if not required_columns.issubset(set(rows[0].keys())):
-            missing = required_columns - set(rows[0].keys())
+        # Determinar si es formato nuevo (AFIP detallado) o formato original
+        has_new_format_columns = "Imp. Neto Gravado Total" in columns and "Total IVA" in columns
+        has_original_format_columns = "Imp. Neto Gravado" in columns and "IVA" in columns
+
+        if has_new_format_columns:
+            # Formato nuevo AFIP
+            required_columns = base_required_columns | {"Imp. Neto Gravado Total", "Total IVA"}
+        elif has_original_format_columns:
+            # Formato original
+            required_columns = base_required_columns | {"Imp. Neto Gravado", "IVA"}
+        else:
+            raise HTTPException(
+                status_code=400,
+                detail="El archivo CSV no tiene el formato correcto. Debe contener columnas de IVA en formato original ('Imp. Neto Gravado' + 'IVA') o formato AFIP ('Imp. Neto Gravado Total' + 'Total IVA')",
+            )
+
+        if not required_columns.issubset(columns):
+            missing = required_columns - columns
             raise HTTPException(
                 status_code=400,
                 detail=f"El archivo CSV no tiene las columnas requeridas. Faltan: {missing}",
@@ -241,26 +262,38 @@ async def upload_comprobantes(
         
         for index, row in enumerate(rows):
             try:
+                # Mapear columnas según el formato detectado
+                if has_new_format_columns:
+                    # Formato nuevo AFIP - mapear a nombres esperados por el backend
+                    neto_gravado_field = "Imp. Neto Gravado Total"
+                    iva_field = "Total IVA"
+                    numeric_fields = ["Tipo Cambio", "Imp. Neto Gravado Total", "Imp. Neto No Gravado", "Imp. Op. Exentas", "Otros Tributos", "Total IVA", "Imp. Total"]
+                else:
+                    # Formato original
+                    neto_gravado_field = "Imp. Neto Gravado"
+                    iva_field = "IVA"
+                    numeric_fields = ["Tipo Cambio", "Imp. Neto Gravado", "Imp. Neto No Gravado", "Imp. Op. Exentas", "Otros Tributos", "IVA", "Imp. Total"]
+
                 # Reemplazar comas por puntos en campos numéricos
-                for field in ["Tipo Cambio", "Imp. Neto Gravado", "Imp. Neto No Gravado", "Imp. Op. Exentas", "Otros Tributos", "IVA", "Imp. Total"]:
+                for field in numeric_fields:
                     if field in row and row[field]:
                         row[field] = row[field].replace(',', '.')
 
                 punto_venta = int(row["Punto de Venta"])
                 numero_desde = int(row["Número Desde"])
                 numero_hasta = int(row["Número Hasta"])
-                
+
                 if comprobante_repo.exists_comprobante_by_numero(punto_venta, numero_desde, numero_hasta):
                     resultados.append({
-                        "fila": index + 1, 
-                        "estado": "error", 
+                        "fila": index + 1,
+                        "estado": "error",
                         "error": f"El comprobante número {numero_desde} ya se encuentra en el sistema."
                     })
                     continue
-                
-                es_nota_credito = row["Tipo de Comprobante"] == "Nota de Crédito"
+
+                es_nota_credito = row["Tipo de Comprobante"] == "Nota de Crédito" or row["Tipo de Comprobante"] == "3"
                 multiplicador = -1 if es_nota_credito else 1
-                
+
                 comprobante_data = schemas.ComprobanteCreate(
                     fecha_emision=row["Fecha de Emisión"],
                     punto_venta=punto_venta,
@@ -269,11 +302,11 @@ async def upload_comprobantes(
                     cod_autorizacion=int(row["Cód. Autorización"]),
                     tipo_cambio=float(row["Tipo Cambio"]),
                     moneda=row["Moneda"],
-                    neto_gravado=float(row["Imp. Neto Gravado"]) * multiplicador,
+                    neto_gravado=float(row[neto_gravado_field]) * multiplicador,
                     neto_no_gravado=float(row["Imp. Neto No Gravado"]) * multiplicador,
                     exento=float(row["Imp. Op. Exentas"]) * multiplicador,
                     otros_tributos=float(row["Otros Tributos"]) * multiplicador,
-                    iva=float(row["IVA"]) * multiplicador,
+                    iva=float(row[iva_field]) * multiplicador,
                     total=float(row["Imp. Total"]) * multiplicador,
                     emisor=schemas.EmisorCreate(
                         cuit=row["Nro. Doc. Emisor"],
@@ -281,8 +314,8 @@ async def upload_comprobantes(
                         tipo_doc=str(row["Tipo Doc. Emisor"]),
                     ),
                     tipo_comprobante=schemas.TipoComprobanteCreate(
-                        tipo_comprobante=1 if row["Tipo de Comprobante"] == "Factura" else (3 if row["Tipo de Comprobante"] == "Nota de Crédito" else int(row["Tipo de Comprobante"])),
-                        nombre=f"Tipo-{1 if row['Tipo de Comprobante'] == 'Factura' else (3 if row['Tipo de Comprobante'] == 'Nota de Crédito' else int(row['Tipo de Comprobante']))}", # Si no existe igual no lo crea
+                        tipo_comprobante=1 if row["Tipo de Comprobante"] == "1" or row["Tipo de Comprobante"] == "Factura" else (3 if row["Tipo de Comprobante"] == "3" or row["Tipo de Comprobante"] == "Nota de Crédito" else int(row["Tipo de Comprobante"])),
+                        nombre=f"Tipo-{1 if row['Tipo de Comprobante'] == '1' or row['Tipo de Comprobante'] == 'Factura' else (3 if row['Tipo de Comprobante'] == '3' or row['Tipo de Comprobante'] == 'Nota de Crédito' else int(row['Tipo de Comprobante']))}", # Si no existe igual no lo crea
                     ),
                 )
 
