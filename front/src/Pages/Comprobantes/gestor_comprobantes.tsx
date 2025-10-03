@@ -144,6 +144,9 @@ const GestorComprobantes: React.FC = () => {
       title: 'Fecha',
       dataIndex: 'fecha_emision',
       key: 'fecha',
+      sorter: (a: Comprobante, b: Comprobante) => {
+        return dayjs(a.fecha_emision).unix() - dayjs(b.fecha_emision).unix();
+      },
       filterDropdown: ({ setSelectedKeys, selectedKeys, confirm, clearFilters }: any) => (
         <div style={{ padding: 8 }}>
           <DatePicker.RangePicker
