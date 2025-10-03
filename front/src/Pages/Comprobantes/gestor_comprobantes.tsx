@@ -260,31 +260,21 @@ const GestorComprobantes: React.FC = () => {
             />
             <Button
               icon={<DeleteOutlined />}
+              danger
               onClick={() => {
-                Modal.confirm({
-                  title: '¿Estás seguro?',
-                  content: 'Esta acción no se puede deshacer. El comprobante será eliminado permanentemente.',
-                  okText: 'Sí, eliminar',
-                  cancelText: 'Cancelar',
-                  okType: 'danger',
-                  onOk: async () => {
+                if (window.confirm('¿Estás seguro de que deseas eliminar este comprobante? Esta acción no se puede deshacer.')) {
+                  (async () => {
                     try {
-                      const response = await fetch(`http://localhost:9000/comprobante/${record.id}`, {
-                        method: 'DELETE',
-                      });
-
-                      if (response.ok) {
-                        message.success('Comprobante eliminado');
-                        await fetchComprobantes();
-                      } else {
-                        const errorData = await response.json();
-                        message.error(`Error al eliminar: ${errorData.detail || 'Error desconocido'}`);
-                      }
-                    } catch (error) {
-                      message.error('Error al eliminar comprobante');
+                      const response = await api.delete(`/comprobante/${record.id}`);
+                      message.success('Comprobante eliminado');
+                      await fetchComprobantes();
+                    } catch (error: any) {
+                      console.error("Error al eliminar:", error);
+                      const errorData = error.response?.data;
+                      message.error(`Error al eliminar: ${errorData?.detail || 'Error desconocido'}`);
                     }
-                  }
-                });
+                  })();
+                }
               }}
             />
             <Button
