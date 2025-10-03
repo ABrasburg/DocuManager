@@ -252,22 +252,8 @@ async def upload_comprobantes(
                 return default
 
         max_numero_hasta = max(safe_int_early(row["Número Hasta"]) for row in rows if row.get("Número Hasta"))
-        
-        from src.repositories.archivo_comprobante_repo import ArchivoComprobanteRepo
-        archivo_repo = ArchivoComprobanteRepo(db)
-        
+
         resultados = []
-        
-        if archivo_repo.exists_archivo_by_numero_hasta(max_numero_hasta):
-            resultados.append({
-                "fila": 0, 
-                "estado": "error", 
-                "error": f"El comprobante número {max_numero_hasta} ya se encuentra en el sistema."
-            })
-            return {
-                "mensaje": f"Archivo rechazado por duplicado. Errores: 1",
-                "detalles": resultados,
-            }
         comprobante_repo = repo.ComprobanteRepo(db)
         
         for index, row in enumerate(rows):
