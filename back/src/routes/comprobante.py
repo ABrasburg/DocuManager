@@ -120,8 +120,9 @@ def get_comprobantes_sumar(
     db: Session = Depends(get_db),
 ):
     """
-    Sumar los comprobantes filtrados por cuit, tipo de comprobante y fechas
-    Si son Factura los suma si son Notas de credito lo resta
+    Sumar los comprobantes filtrados por cuit y fechas.
+    Las notas de crédito ya se almacenan con valores negativos en la BD,
+    por lo que solo se necesita sumar todos los valores directamente.
     """
     emisor = EmisorRepo(db).get_emisor_by_cuit(cuit)
     if not emisor:
@@ -129,18 +130,6 @@ def get_comprobantes_sumar(
     comprobantes = repo.ComprobanteRepo(db).get_comprobantes_by_emisor_and_fechas(
         emisor.id, fecha_inicio, fecha_fin
     )
-    tipos_comprobante = TipoComprobanteRepo(db).get_tipos_comprobantes()
-    if not tipos_comprobante:
-        raise HTTPException(status_code=404, detail="Tipo de comprobante no encontrado")
-    id_factura = 0
-    id_nota_credito = 0
-    for tipo in tipos_comprobante:
-        if tipo.nombre == "Factura":
-            id_factura = tipo.id
-        if tipo.nombre == "Nota de Crédito":
-            id_nota_credito = tipo.id
-    if not id_factura or not id_nota_credito:
-        raise HTTPException(status_code=404, detail="Tipo de comprobante no encontrado")
 
     neto_gravado = 0
     neto_no_gravado = 0
@@ -149,16 +138,14 @@ def get_comprobantes_sumar(
     iva = 0
     total = 0
 
+    # Sumar directamente - las notas de crédito ya tienen valores negativos
     for comprobante in comprobantes:
-        signo = 1 if comprobante.tipo_comprobante_id == id_factura else -1 if comprobante.tipo_comprobante_id == id_nota_credito else 0
-        if signo == 0:
-            continue
-        neto_gravado += signo * (comprobante.neto_gravado or 0)
-        neto_no_gravado += signo * (comprobante.neto_no_gravado or 0)
-        exento += signo * (comprobante.exento or 0)
-        otros_tributos += signo * (comprobante.otros_tributos or 0)
-        iva += signo * (comprobante.iva or 0)
-        total += signo * (comprobante.total or 0)
+        neto_gravado += (comprobante.neto_gravado or 0)
+        neto_no_gravado += (comprobante.neto_no_gravado or 0)
+        exento += (comprobante.exento or 0)
+        otros_tributos += (comprobante.otros_tributos or 0)
+        iva += (comprobante.iva or 0)
+        total += (comprobante.total or 0)
 
     return {
         "cuit": cuit,
@@ -406,8 +393,7 @@ async def download_comprobantes(
         emisor = next(
             (e for e in emisores if e.id == comprobante.emisor_id), None
         )
-        signo = -1 if tipo_comprobante and tipo_comprobante.nombre == "Nota de Crédito" else 1
-        
+
         # Formatear fecha a DD/MM/YYYY
         fecha_formateada = comprobante.fecha_emision
         try:
@@ -422,7 +408,7 @@ async def download_comprobantes(
             except ValueError:
                 # Si no es ninguno de los formatos esperados, usar tal como está
                 pass
-        
+
         data.append({
             "Fecha de Emisión": fecha_formateada,
             "Tipo de Comprobante": tipo_comprobante.nombre if tipo_comprobante else "",
@@ -435,12 +421,12 @@ async def download_comprobantes(
             "Denominación Emisor": emisor.denominacion if emisor else "",
             "Tipo Cambio": comprobante.tipo_cambio,
             "Moneda": comprobante.moneda,
-            "Imp. Neto Gravado": signo * (comprobante.neto_gravado or 0),
-            "Imp. Neto No Gravado": signo * (comprobante.neto_no_gravado or 0),
-            "Imp. Op. Exentas": signo * (comprobante.exento or 0),
-            "IVA": signo * (comprobante.iva or 0),
-            "Otros Tributos": signo * (comprobante.otros_tributos or 0),
-            "Imp. Total": signo * (comprobante.total or 0),
+            "Imp. Neto Gravado": comprobante.neto_gravado or 0,
+            "Imp. Neto No Gravado": comprobante.neto_no_gravado or 0,
+            "Imp. Op. Exentas": comprobante.exento or 0,
+            "IVA": comprobante.iva or 0,
+            "Otros Tributos": comprobante.otros_tributos or 0,
+            "Imp. Total": comprobante.total or 0,
         })
 
     csv_buffer = StringIO()
@@ -524,8 +510,7 @@ async def download_comprobantes_cuenta_corriente(
         emisor = next(
             (e for e in emisores if e.id == comprobante.emisor_id), None
         )
-        signo = -1 if tipo_comprobante and tipo_comprobante.nombre == "Nota de Crédito" else 1
-        
+
         # Formatear fecha a DD/MM/YYYY
         fecha_formateada = comprobante.fecha_emision
         try:
@@ -540,7 +525,7 @@ async def download_comprobantes_cuenta_corriente(
             except ValueError:
                 # Si no es ninguno de los formatos esperados, usar tal como está
                 pass
-        
+
         data.append({
             "Fecha de Emisión": fecha_formateada,
             "Tipo de Comprobante": tipo_comprobante.nombre if tipo_comprobante else "",
@@ -553,12 +538,12 @@ async def download_comprobantes_cuenta_corriente(
             "Denominación Emisor": emisor.denominacion if emisor else "",
             "Tipo Cambio": comprobante.tipo_cambio,
             "Moneda": comprobante.moneda,
-            "Imp. Neto Gravado": signo * (comprobante.neto_gravado or 0),
-            "Imp. Neto No Gravado": signo * (comprobante.neto_no_gravado or 0),
-            "Imp. Op. Exentas": signo * (comprobante.exento or 0),
-            "IVA": signo * (comprobante.iva or 0),
-            "Otros Tributos": signo * (comprobante.otros_tributos or 0),
-            "Imp. Total": signo * (comprobante.total or 0),
+            "Imp. Neto Gravado": comprobante.neto_gravado or 0,
+            "Imp. Neto No Gravado": comprobante.neto_no_gravado or 0,
+            "Imp. Op. Exentas": comprobante.exento or 0,
+            "IVA": comprobante.iva or 0,
+            "Otros Tributos": comprobante.otros_tributos or 0,
+            "Imp. Total": comprobante.total or 0,
             "Fecha Pago": comprobante.fecha_pago or "",
             "Número Ticket": comprobante.numero_ticket or "",
         })

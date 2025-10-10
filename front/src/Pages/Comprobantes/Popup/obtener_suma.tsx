@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Modal, ModalContent, ModalHeader, ModalFooter, ModalBody, ModalCloseButton, Button, FormControl, FormLabel, Select, Input } from '@chakra-ui/react';
 import api from '../../../api';
+import { formatCurrency } from '../../../Utils/formatNumber';
 
 interface Suma {
     cuit: number;
@@ -120,19 +121,19 @@ const SumaPopup: React.FC<Props> = ({ open, onClose }) => {
                         <>
                             {suma && (
                                 <div>
-                                    <h3>Resultados:</h3>
-                                    <p>Cuit: {suma.cuit}</p>
-                                    <p>Fecha Inicio: {suma.fecha_inicio}</p>
-                                    <p>Fecha Fin: {suma.fecha_fin}</p>
-                                    <p>Neto Gravado: {suma.neto_gravado.toFixed(2)}</p>
-                                    <p>Neto No Gravado: {suma.neto_no_gravado.toFixed(2)}</p>
-                                    <p>Exento: {suma.exento.toFixed(2)}</p>
-                                    <p>Otros Tributos: {suma.otros_tributos.toFixed(2)}</p>
-                                    <p>IVA: {suma.iva.toFixed(2)}</p>
-                                    <p>Total: {suma.total.toFixed(2)}</p>
+                                    <h3 style={{ fontWeight: 'bold', marginBottom: '10px' }}>Resultados:</h3>
+                                    <p><strong>Cuit:</strong> {suma.cuit}</p>
+                                    <p><strong>Fecha Inicio:</strong> {suma.fecha_inicio}</p>
+                                    <p><strong>Fecha Fin:</strong> {suma.fecha_fin}</p>
+                                    <p><strong>Neto Gravado:</strong> {formatCurrency(suma.neto_gravado)}</p>
+                                    <p><strong>Neto No Gravado:</strong> {formatCurrency(suma.neto_no_gravado)}</p>
+                                    <p><strong>Exento:</strong> {formatCurrency(suma.exento)}</p>
+                                    <p><strong>Otros Tributos:</strong> {formatCurrency(suma.otros_tributos)}</p>
+                                    <p><strong>IVA:</strong> {formatCurrency(suma.iva)}</p>
+                                    <p style={{ fontSize: '18px', fontWeight: 'bold', marginTop: '10px' }}><strong>Total:</strong> {formatCurrency(suma.total)}</p>
                                 </div>
                             )}
-                            <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '20px' }}>
                                 <Button onClick={() => setSegundoPaso(false)} colorScheme="gray">
                                     Atrás
                                 </Button>
