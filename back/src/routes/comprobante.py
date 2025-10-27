@@ -234,7 +234,9 @@ async def upload_comprobantes(
             if not value or value == '' or value is None:
                 return default
             try:
-                return int(value)
+                # Limpiar separadores comunes (-, /, espacios) antes de convertir
+                cleaned_value = str(value).replace('-', '').replace('/', '').replace(' ', '').strip()
+                return int(cleaned_value) if cleaned_value else default
             except (ValueError, TypeError):
                 return default
 
@@ -272,9 +274,47 @@ async def upload_comprobantes(
                     if not value or value == '' or value is None:
                         return default
                     try:
-                        return int(value)
+                        # Limpiar separadores comunes (-, /, espacios) antes de convertir
+                        cleaned_value = str(value).replace('-', '').replace('/', '').replace(' ', '').strip()
+                        return int(cleaned_value) if cleaned_value else default
                     except (ValueError, TypeError):
                         return default
+
+                def normalize_date(date_str):
+                    """
+                    Normaliza una fecha a formato ISO (YYYY-MM-DD).
+                    Soporta formatos: DD/MM/YYYY, DD-MM-YYYY, YYYY-MM-DD, YYYY/MM/DD
+                    """
+                    if not date_str or date_str == '':
+                        return None
+
+                    date_str = str(date_str).strip()
+
+                    # Si ya está en formato ISO, retornar
+                    if len(date_str) == 10 and date_str[4] == '-' and date_str[7] == '-':
+                        try:
+                            datetime.strptime(date_str, '%Y-%m-%d')
+                            return date_str
+                        except ValueError:
+                            pass
+
+                    # Intentar diferentes formatos
+                    formats = [
+                        '%d/%m/%Y',  # 22/10/2025
+                        '%d-%m-%Y',  # 22-10-2025
+                        '%Y/%m/%d',  # 2025/10/22
+                        '%Y-%m-%d',  # 2025-10-22
+                    ]
+
+                    for fmt in formats:
+                        try:
+                            date_obj = datetime.strptime(date_str, fmt)
+                            return date_obj.strftime('%Y-%m-%d')
+                        except ValueError:
+                            continue
+
+                    # Si no se pudo parsear, retornar como está
+                    return date_str
 
                 # Reemplazar comas por puntos en campos numéricos
                 for field in numeric_fields:
@@ -297,7 +337,7 @@ async def upload_comprobantes(
                 multiplicador = -1 if es_nota_credito else 1
 
                 comprobante_data = schemas.ComprobanteCreate(
-                    fecha_emision=row["Fecha de Emisión"],
+                    fecha_emision=normalize_date(row["Fecha de Emisión"]),
                     punto_venta=punto_venta,
                     numero_desde=numero_desde,
                     numero_hasta=numero_hasta,

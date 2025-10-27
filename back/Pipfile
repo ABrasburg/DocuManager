@@ -19,7 +19,7 @@ python-jose = "*"
 python-multipart = "*"
 jose = "*"
 coverage = "*"
-psycopg2-binary = "*"
+# psycopg solo necesario para PostgreSQL en producción
 httpx = "*"
 python-dotenv = "*"
 firebase-admin = "*"

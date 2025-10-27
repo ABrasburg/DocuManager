@@ -5,7 +5,7 @@ echo ========================================
 echo.
 
 echo Iniciando Backend...
-start "DocuManager Backend" "%~dp0back\start_backend.bat"
+start /min "DocuManager Backend" "%~dp0back\start_backend.bat"
 
 echo Iniciando Frontend...
 start "DocuManager Frontend" "%~dp0front\start_frontend.bat"
