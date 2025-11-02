@@ -300,7 +300,17 @@ const GestorCuentaCorriente: React.FC = () => {
                 </div>
             </div>
             <Spin spinning={loadingComprobantes} tip="Cargando comprobantes...">
-                <Table<Comprobante> columns={columns} dataSource={comprobantes} size="middle" />
+                <Table<Comprobante>
+                    columns={columns}
+                    dataSource={comprobantes}
+                    size="middle"
+                    pagination={{
+                        showSizeChanger: true,
+                        pageSizeOptions: ['10', '25', '50', '100'],
+                        defaultPageSize: 10,
+                        showTotal: (total, range) => `${range[0]}-${range[1]} de ${total} comprobantes`,
+                    }}
+                />
             </Spin>
             <SetCuentaCorriente
                 isOpen={isOpen}

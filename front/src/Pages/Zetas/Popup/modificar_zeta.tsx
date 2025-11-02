@@ -24,8 +24,8 @@ interface Zeta {
     ultimo_ticket: number;
     exento: number;
     iva: number;
-    gravado: number;
-    cuenta_corriente: string;
+    perfumeria: number;
+    medicamentos_iva: number;
     total: number;
 }
 
@@ -41,13 +41,13 @@ interface Props {
   
 const ModificarZeta: React.FC<Props> = ({ open, onClose, zeta, editar, nuevo, onCreate, onEdit }) => {
   const [fecha, setFecha] = useState<number>(zeta.fecha);
-  const [punto_de_venta, setPuntoVenta] = useState<number>(zeta.numero);
+  const [punto_de_venta, setPuntoVenta] = useState<number>(zeta.punto_de_venta);
   const [numero, setNumero] = useState<number>(zeta.numero);
   const [ultimo_ticket, setUltimoTicket] = useState<number>(zeta.ultimo_ticket);
   const [exento, setExento] = useState<number>(zeta.exento);
   const [iva, setIva] = useState<number>(zeta.iva);
-  const [gravado, setGravado] = useState<number>(zeta.gravado);
-  const [cuenta_corriente, setCuentaCorriente] = useState<string>(zeta.cuenta_corriente);
+  const [perfumeria, setPerfumeria] = useState<number>(zeta.perfumeria);
+  const [medicamentos_iva, setMedicamentosIva] = useState<number>(zeta.medicamentos_iva);
   const [total, setTotal] = useState<number>(zeta.total);
 
   const toast = useToast();
@@ -62,8 +62,8 @@ const ModificarZeta: React.FC<Props> = ({ open, onClose, zeta, editar, nuevo, on
         ultimo_ticket,
         exento,
         iva,
-        gravado,
-        cuenta_corriente,
+        perfumeria,
+        medicamentos_iva,
         total,
       });
   
@@ -90,7 +90,7 @@ const ModificarZeta: React.FC<Props> = ({ open, onClose, zeta, editar, nuevo, on
   };
   
   const validateCreate = () => {
-    if (!fecha || !punto_de_venta || !numero || !ultimo_ticket || !exento || !iva || !gravado || !cuenta_corriente || !total) {
+    if (!fecha || !punto_de_venta || !numero || !ultimo_ticket) {
       toast({
         title: 'Error.',
         description: "Todos los campos son obligatorios.",
@@ -100,10 +100,10 @@ const ModificarZeta: React.FC<Props> = ({ open, onClose, zeta, editar, nuevo, on
       });
       return false;
     }
-    if (exento < 0) {
+    if (exento < 0 || iva < 0) {
       toast({
         title: 'Error.',
-        description: "El campo Exento no puede ser negativo.",
+        description: "Los campos Exento e IVA no pueden ser negativos.",
         status: 'error',
         duration: 9000,
         isClosable: true,
@@ -124,8 +124,8 @@ const ModificarZeta: React.FC<Props> = ({ open, onClose, zeta, editar, nuevo, on
         ultimo_ticket,
         exento,
         iva,
-        gravado,
-        cuenta_corriente,
+        perfumeria,
+        medicamentos_iva,
         total,
       });
   
@@ -158,18 +158,18 @@ const ModificarZeta: React.FC<Props> = ({ open, onClose, zeta, editar, nuevo, on
       setUltimoTicket(zeta.ultimo_ticket);
       setExento(zeta.exento);
       setIva(zeta.iva);
-      setGravado(zeta.gravado);
-      setCuentaCorriente(zeta.cuenta_corriente);
+      setPerfumeria(zeta.perfumeria);
+      setMedicamentosIva(zeta.medicamentos_iva);
       setTotal(zeta.total);
     } else if (nuevo) {
       setFecha(Date.now());
-      setPuntoVenta(0);
+      setPuntoVenta(NaN);
       setNumero(0);
       setUltimoTicket(0);
       setExento(0);
       setIva(0);
-      setGravado(0);
-      setCuentaCorriente('');
+      setPerfumeria(0);
+      setMedicamentosIva(0);
       setTotal(0);
     }
   }
@@ -200,22 +200,12 @@ const ModificarZeta: React.FC<Props> = ({ open, onClose, zeta, editar, nuevo, on
           </FormControl>
           <FormControl isRequired mt={4}>
             <FormLabel>Numero de Zeta</FormLabel>
-            <select
+            <Input
+              type="number"
               value={numero || ''}
-              onChange={(e) => setNumero(Number(e.target.value))}
-              style={{
-                width: '100%',
-                padding: '8px',
-                borderRadius: '4px',
-                border: '1px solid #ccc',
-              }}
-            >
-              <option value="" disabled>
-                Seleccionar número de Zeta
-              </option>
-              <option value={8}>8</option>
-              <option value={9}>9</option>
-            </select>
+              onChange={(e) => setNumero(e.target.value === '' ? NaN : Number(e.target.value))}
+              onWheel={(e) => e.currentTarget.blur()}
+            />
           </FormControl>
           <FormControl isRequired mt={4}>
             <FormLabel>Último Ticket</FormLabel>
@@ -231,7 +221,13 @@ const ModificarZeta: React.FC<Props> = ({ open, onClose, zeta, editar, nuevo, on
             <Input
               type="number"
               value={exento || ''}
-              isReadOnly
+              onChange={(e) => {
+                const newExento = e.target.value === '' ? 0 : Number(e.target.value);
+                setExento(newExento);
+                const newTotal = newExento + iva;
+                setTotal(parseFloat(newTotal.toFixed(2)));
+              }}
+              onWheel={(e) => e.currentTarget.blur()}
             />
           </FormControl>
           <FormControl isRequired mt={4}>
@@ -240,49 +236,40 @@ const ModificarZeta: React.FC<Props> = ({ open, onClose, zeta, editar, nuevo, on
               type="number"
               value={iva || ''}
               onChange={(e) => {
-              const newIva = e.target.value === '' ? NaN : Number(e.target.value);
-              setIva(newIva);
-              const newGravado = (newIva / 0.21) + newIva;
-              setGravado(parseFloat(newGravado.toFixed(2)));
-              const newExento = total - newGravado - Number(cuenta_corriente || 0);
-              setExento(parseFloat(newExento.toFixed(2)));
+                const newIva = e.target.value === '' ? 0 : Number(e.target.value);
+                setIva(newIva);
+                const newPerfumeria = newIva * 0.20;
+                setPerfumeria(parseFloat(newPerfumeria.toFixed(2)));
+                const newMedicamentosIva = newIva * 0.80;
+                setMedicamentosIva(parseFloat(newMedicamentosIva.toFixed(2)));
+                const newTotal = exento + newIva;
+                setTotal(parseFloat(newTotal.toFixed(2)));
               }}
               onWheel={(e) => e.currentTarget.blur()}
             />
           </FormControl>
           <FormControl isRequired mt={4}>
-            <FormLabel>Gravado</FormLabel>
+            <FormLabel>Perfumería (20% del IVA)</FormLabel>
             <Input
               type="number"
-              value={gravado || ''}
+              value={perfumeria || ''}
               isReadOnly
             />
           </FormControl>
           <FormControl isRequired mt={4}>
-            <FormLabel>Cuenta Corriente</FormLabel>
+            <FormLabel>Medicamentos IVA (80% del IVA)</FormLabel>
             <Input
-              type="text"
-              value={cuenta_corriente || ''}
-              onChange={(e) => {
-              const newCuentaCorriente = e.target.value;
-              setCuentaCorriente(newCuentaCorriente);
-              const newExento = total - gravado - Number(newCuentaCorriente || 0);
-              setExento(parseFloat(newExento.toFixed(2)));
-              }}
+              type="number"
+              value={medicamentos_iva || ''}
+              isReadOnly
             />
           </FormControl>
           <FormControl isRequired mt={4}>
-            <FormLabel>Total</FormLabel>
+            <FormLabel>Total (Exento + IVA)</FormLabel>
             <Input
               type="number"
               value={total || ''}
-              onChange={(e) => {
-              const newTotal = e.target.value === '' ? NaN : Number(e.target.value);
-              setTotal(newTotal);
-              const newExento = newTotal - gravado - Number(cuenta_corriente || 0);
-              setExento(parseFloat(newExento.toFixed(2)));
-              }}
-              onWheel={(e) => e.currentTarget.blur()}
+              isReadOnly
             />
           </FormControl>
         </ModalBody>

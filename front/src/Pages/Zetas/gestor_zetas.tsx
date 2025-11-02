@@ -20,8 +20,8 @@ interface Zeta {
     ultimo_ticket: number;
     exento: number;
     iva: number;
-    gravado: number;
-    cuenta_corriente: string;
+    perfumeria: number;
+    medicamentos_iva: number;
     total: number;
 }
 
@@ -38,8 +38,8 @@ const GestorZetas: React.FC = () => {
         ultimo_ticket: 0,
         exento: 0,
         iva: 0,
-        gravado: 0,
-        cuenta_corriente: '',
+        perfumeria: 0,
+        medicamentos_iva: 0,
         total: 0,
     });
 
@@ -86,8 +86,8 @@ const GestorZetas: React.FC = () => {
             ultimo_ticket: 0,
             exento: 0,
             iva: 0,
-            gravado: 0,
-            cuenta_corriente: '',
+            perfumeria: 0,
+            medicamentos_iva: 0,
             total: 0,
         });
     };
@@ -176,6 +176,7 @@ const GestorZetas: React.FC = () => {
                 return cumpleStart && cumpleEnd;
             },
         },
+        { title: 'Punto de Venta', dataIndex: 'punto_de_venta', key: 'punto_de_venta' },
         { title: 'Número', dataIndex: 'numero', key: 'numero' },
         { title: 'Último Ticket', dataIndex: 'ultimo_ticket', key: 'ultimo_ticket' },
         { 
@@ -184,22 +185,22 @@ const GestorZetas: React.FC = () => {
             key: 'exento',
             render: (value: number) => formatCurrency(value)
         },
-        { 
-            title: 'IVA', 
-            dataIndex: 'iva', 
+        {
+            title: 'IVA',
+            dataIndex: 'iva',
             key: 'iva',
             render: (value: number) => formatCurrency(value)
         },
-        { 
-            title: 'Gravado', 
-            dataIndex: 'gravado', 
-            key: 'gravado',
+        {
+            title: 'Perfumería',
+            dataIndex: 'perfumeria',
+            key: 'perfumeria',
             render: (value: number) => formatCurrency(value)
         },
-        { 
-            title: 'Cuenta Corriente', 
-            dataIndex: 'cuenta_corriente', 
-            key: 'cuenta_corriente',
+        {
+            title: 'Medicamentos IVA',
+            dataIndex: 'medicamentos_iva',
+            key: 'medicamentos_iva',
             render: (value: number) => formatCurrency(value)
         },
         { 
@@ -258,8 +259,8 @@ const GestorZetas: React.FC = () => {
                 ultimo_ticket: 0,
                 exento: 0,
                 iva: 0,
-                gravado: 0,
-                cuenta_corriente: '',
+                perfumeria: 0,
+                medicamentos_iva: 0,
                 total: 0,
                 });
                 fetchZetas();

@@ -12,8 +12,8 @@ class ZetaBase(BaseModel):
     ultimo_ticket: int
     exento: float
     iva: float
-    gravado: float
-    cuenta_corriente: float
+    perfumeria: float
+    medicamentos_iva: float
     total: float
 
 class ZetaCreate(ZetaBase):

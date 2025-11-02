@@ -27,13 +27,6 @@ class ZetaRepo:
             .all()
         )
 
-    def get_zetas_by_cuenta_corriente(self, cuenta_corriente: str):
-        return (
-            self.db.query(Zeta)
-            .filter(Zeta.cuenta_corriente == cuenta_corriente)
-            .all()
-        )
-
     def delete_zeta(self, id: int):
         db_zeta = self.db.query(Zeta).filter(Zeta.id == id).first()
         if db_zeta:

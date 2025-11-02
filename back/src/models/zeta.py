@@ -14,6 +14,6 @@ class Zeta(Base):
     ultimo_ticket = Column(Integer, nullable=False)
     exento = Column(Float, nullable=False)
     iva = Column(Float, nullable=False)
-    gravado = Column(Float, nullable=False)
-    cuenta_corriente = Column(Float, nullable=False)
+    perfumeria = Column(Float, nullable=False)
+    medicamentos_iva = Column(Float, nullable=False)
     total = Column(Float, nullable=False)
