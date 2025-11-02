@@ -52,6 +52,8 @@ const GestorCuentaCorriente: React.FC = () => {
     const [isDownloadOpen, setIsDownloadOpen] = useState(false);
     const [isPagadoModalOpen, setIsPagadoModalOpen] = useState(false);
     const [selectedComprobante, setSelectedComprobante] = useState<Comprobante | null>(null);
+    const [selectedComprobantes, setSelectedComprobantes] = useState<Comprobante[]>([]);
+    const [selectedRowKeys, setSelectedRowKeys] = useState<React.Key[]>([]);
 
     useEffect(() => {
         fetchComprobantes();
@@ -105,16 +107,30 @@ const GestorCuentaCorriente: React.FC = () => {
 
       const handleMarcarPagado = (comprobante: Comprobante) => {
         setSelectedComprobante(comprobante);
+        setSelectedComprobantes([comprobante]);
+        setIsPagadoModalOpen(true);
+      };
+
+      const handleMarcarSeleccionadosPagado = () => {
+        if (selectedComprobantes.length === 0) {
+          message.warning('Por favor seleccione al menos un comprobante');
+          return;
+        }
+        setSelectedComprobante(null);
         setIsPagadoModalOpen(true);
       };
 
       const handleClosePagadoModal = () => {
         setIsPagadoModalOpen(false);
         setSelectedComprobante(null);
+        setSelectedComprobantes([]);
+        setSelectedRowKeys([]);
       };
 
       const handlePagadoSuccess = () => {
         fetchComprobantes();
+        setSelectedComprobantes([]);
+        setSelectedRowKeys([]);
       };
 
     const isSameOrAfter = (date: string, start: string) => {
@@ -125,6 +141,18 @@ const GestorCuentaCorriente: React.FC = () => {
         return dayjs(date).isSame(end, 'day') || dayjs(date).isBefore(end, 'day');
       };
     const [loadingComprobantes, setLoadingComprobantes] = React.useState<boolean>(true);
+
+    const rowSelection = {
+        selectedRowKeys,
+        onChange: (selectedKeys: React.Key[], selectedRows: Comprobante[]) => {
+            setSelectedRowKeys(selectedKeys);
+            setSelectedComprobantes(selectedRows);
+        },
+        getCheckboxProps: (record: Comprobante) => ({
+            disabled: !!record.fecha_pago, // Deshabilitar checkbox si ya está pagado
+        }),
+    };
+
     const columns = [
         {
           title: 'Fecha',
@@ -296,6 +324,14 @@ const GestorCuentaCorriente: React.FC = () => {
                         >
                             Descargar CSV
                         </Button>
+                        <Button
+                            type={selectedComprobantes.length === 0 ? "default" : "primary"}
+                            icon={<DollarOutlined />}
+                            onClick={handleMarcarSeleccionadosPagado}
+                            disabled={selectedComprobantes.length === 0}
+                        >
+                            Marcar Seleccionados como Pagados ({selectedComprobantes.length})
+                        </Button>
                     </div>
                 </div>
             </div>
@@ -303,6 +339,8 @@ const GestorCuentaCorriente: React.FC = () => {
                 <Table<Comprobante>
                     columns={columns}
                     dataSource={comprobantes}
+                    rowKey="id"
+                    rowSelection={rowSelection}
                     size="middle"
                     pagination={{
                         showSizeChanger: true,
@@ -326,6 +364,7 @@ const GestorCuentaCorriente: React.FC = () => {
                 visible={isPagadoModalOpen}
                 onClose={handleClosePagadoModal}
                 comprobante={selectedComprobante}
+                comprobantes={selectedComprobantes}
                 onSuccess={handlePagadoSuccess}
             />
         </div>
