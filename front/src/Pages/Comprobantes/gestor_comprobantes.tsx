@@ -245,14 +245,9 @@ const GestorComprobantes: React.FC = () => {
                 icon={<FormOutlined />}
                 onClick={async () => {
                     try {
-                      const response = await fetch(`http://localhost:9000/comprobante/${record.id}`);
-                      if (response.ok) {
-                        const data = await response.json();
-                        setComprobante(data);
-                        setMostrarPopupComprobanteEdit(true);
-                      } else {
-                        message.error('Error al cargar comprobante');
-                      }
+                      const response = await api.get(`/comprobante/${record.id}`);
+                      setComprobante(response.data);
+                      setMostrarPopupComprobanteEdit(true);
                     }
                     catch (error) {
                       message.error('Error al cargar comprobante');
@@ -282,14 +277,9 @@ const GestorComprobantes: React.FC = () => {
                 icon={<MoreOutlined />}
                 onClick={async () => {
                     try {
-                      const response = await fetch(`http://localhost:9000/comprobante/${record.id}`);
-                      if (response.ok) {
-                        const data = await response.json();
-                        setComprobante(data);
-                        setMostrarPopupComprobante(true);
-                      } else {
-                        message.error('Error al cargar comprobante');
-                      }
+                      const response = await api.get(`/comprobante/${record.id}`);
+                      setComprobante(response.data);
+                      setMostrarPopupComprobante(true);
                     }
                     catch (error) {
                       message.error('Error al cargar comprobante');

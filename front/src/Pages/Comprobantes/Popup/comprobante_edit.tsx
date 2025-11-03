@@ -83,10 +83,25 @@ const ComprobantePopup: React.FC<Props> = ({ comprobante, onClose, open, handleS
     }
   };
 
+  const isValidDate = (dateString: string) => {
+    // Validar formato YYYY-MM-DD
+    const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
+    if (!dateRegex.test(dateString)) return false;
+
+    // Validar que sea una fecha válida
+    const date = new Date(dateString);
+    return !isNaN(date.getTime());
+  };
+
   const isValid =
     editableComprobante &&
-    typeof editableComprobante.cod_autorizacion === 'string' &&
-    editableComprobante.cod_autorizacion.trim() !== '' &&
+    editableComprobante.fecha_emision !== null &&
+    editableComprobante.fecha_emision !== undefined &&
+    String(editableComprobante.fecha_emision).trim() !== '' &&
+    isValidDate(String(editableComprobante.fecha_emision)) &&
+    editableComprobante.cod_autorizacion !== null &&
+    editableComprobante.cod_autorizacion !== undefined &&
+    String(editableComprobante.cod_autorizacion).trim() !== '' &&
     editableComprobante.total >= 0;
 
   return (

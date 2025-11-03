@@ -655,13 +655,17 @@ async def generar_reporte_afip(
         zetas = zetas_filtradas
     
     ventas_exento = sum(z.exento or 0 for z in zetas)
-    ventas_gravado = sum(z.gravado or 0 for z in zetas)
+    ventas_perfumeria = sum(z.perfumeria or 0 for z in zetas)
+    ventas_medicamentos_iva = sum(z.medicamentos_iva or 0 for z in zetas)
     ventas_iva = sum(z.iva or 0 for z in zetas)
     ventas_total = sum(z.total or 0 for z in zetas)
-    
-    diferencia_gravado = ventas_gravado - compras_gravado
+
+    # Total gravado de ventas = perfumería + medicamentos_iva
+    ventas_gravado_total = ventas_perfumeria + ventas_medicamentos_iva
+
+    diferencia_gravado = ventas_gravado_total - compras_gravado
     diferencia_total = ventas_total - compras_subtotal
-    
+
     reporte = {
         "periodo": {
             "fecha_inicio": fecha_inicio,
@@ -676,7 +680,9 @@ async def generar_reporte_afip(
         },
         "ventas": {
             "exento": round(ventas_exento, 2),
-            "gravado": round(ventas_gravado, 2),
+            "perfumeria": round(ventas_perfumeria, 2),
+            "medicamentos_iva": round(ventas_medicamentos_iva, 2),
+            "iva": round(ventas_iva, 2),
             "total": round(ventas_total, 2)
         },
         "diferencia": {
