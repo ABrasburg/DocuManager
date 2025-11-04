@@ -58,27 +58,32 @@ async def download_zetas(
     
     data = []
     for zeta in zetas:
-        data.append([
-           zeta.fecha.strftime("%d/%m/%Y"),
-            f"Z-{zeta.numero:05d}",
-            max(zeta.id_ocho or "", zeta.id_nueve or ""),
-            f"Z-{zeta.numero:05d}",
-            zeta.ultimo_ticket,
-            1,
-            "Consumidos final",
-            0,
-            zeta.total,
-            zeta.exento,
-            zeta.medicamentos_iva,
-            zeta.perfumeria,
-            "",
-        ])
+        data.append({
+            "Fecha": zeta.fecha.strftime("%d/%m/%Y"),
+            "Punto de Venta": zeta.punto_de_venta,
+            "Número": zeta.numero,
+            "Último Ticket": zeta.ultimo_ticket,
+            "Exento": zeta.exento,
+            "IVA": zeta.iva,
+            "Perfumería": zeta.perfumeria,
+            "Medicamentos IVA": zeta.medicamentos_iva,
+            "Total": zeta.total,
+        })
 
     csv_buffer = StringIO()
     if data:
-        # Escribir CSV sin headers (como estaba con pandas)
-        writer = csv.writer(csv_buffer)
-        writer.writerows(data)
+        fieldnames = ["Fecha", "Punto de Venta", "Número", "Último Ticket", "Exento", "IVA", "Perfumería", "Medicamentos IVA", "Total"]
+        writer = csv.DictWriter(csv_buffer, fieldnames=fieldnames, delimiter=';', quotechar='"', quoting=csv.QUOTE_NONNUMERIC)
+        writer.writeheader()
+        for row in data:
+            # Convertir números a formato con coma decimal
+            formatted_row = {}
+            for key, value in row.items():
+                if isinstance(value, (int, float)) and key not in ["Punto de Venta", "Número", "Último Ticket"]:
+                    formatted_row[key] = str(value).replace('.', ',')
+                else:
+                    formatted_row[key] = value
+            writer.writerow(formatted_row)
     csv_buffer.seek(0)
     filename = f"zetas_{fecha_inicio}_a_{fecha_fin}.csv"
 
