@@ -1,14 +1,19 @@
 import React, { useState } from 'react';
 import { Modal, Form, Input, DatePicker, Button, message, List } from 'antd';
 import api from '../../../api';
+import { formatCurrency } from '../../../Utils/formatNumber';
 
 interface Comprobante {
   id: number;
   fecha_emision: string;
   numero_desde: number;
   numero_hasta: number;
+  total: number;
   emisor: {
     denominacion: string;
+  };
+  tipo_comprobante: {
+    nombre: string;
   };
 }
 
@@ -32,6 +37,12 @@ const MarcarPagado: React.FC<MarcarPagadoProps> = ({
 
   const isMultiple = comprobantes.length > 1;
   const displayComprobantes = isMultiple ? comprobantes : (comprobante ? [comprobante] : []);
+
+  // Calcular el total a pagar
+  const totalAPagar = displayComprobantes.reduce((sum, comp) => {
+    const signo = comp.tipo_comprobante?.nombre === "Nota de Crédito" ? -1 : 1;
+    return sum + (signo * (comp.total || 0));
+  }, 0);
 
   const handleSubmit = async (values: any) => {
     if (displayComprobantes.length === 0) return;
@@ -100,6 +111,12 @@ const MarcarPagado: React.FC<MarcarPagadoProps> = ({
                 <p><strong>Fecha Emisión:</strong> {displayComprobantes[0].fecha_emision}</p>
               </>
             )}
+          </div>
+
+          <div style={{ marginBottom: 16, padding: 12, backgroundColor: '#f5f5f5', borderRadius: 6 }}>
+            <p style={{ margin: 0, fontSize: '16px', fontWeight: 'bold', textAlign: 'center' }}>
+              Total a pagar: {formatCurrency(totalAPagar)}
+            </p>
           </div>
 
           <Form
