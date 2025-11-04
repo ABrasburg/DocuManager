@@ -24,6 +24,11 @@ interface Comprobante {
   cod_autorizacion: string;
   tipo_cambio: number;
   moneda: string;
+  neto_gravado: number;
+  neto_no_gravado: number;
+  exento: number;
+  otros_tributos: number;
+  iva: number;
   total: number;
   emisor: {
     cuit: string;

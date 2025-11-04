@@ -24,6 +24,11 @@ interface Comprobante {
   cod_autorizacion: string;
   tipo_cambio: number;
   moneda: string;
+  neto_gravado: number;
+  neto_no_gravado: number;
+  exento: number;
+  otros_tributos: number;
+  iva: number;
   total: number;
   emisor: {
     cuit: string;
@@ -178,6 +183,51 @@ const ComprobantePopup: React.FC<Props> = ({ comprobante, onClose, open, handleS
                   type="text"
                   value={editableComprobante.moneda}
                   onChange={(e) => handleChange('moneda', e.target.value)}
+                />
+              </FormControl>
+
+              <FormControl mt={4}>
+                <FormLabel>Neto Gravado</FormLabel>
+                <Input
+                  type="number"
+                  value={editableComprobante.neto_gravado}
+                  onChange={(e) => handleChange('neto_gravado', Number(e.target.value))}
+                />
+              </FormControl>
+
+              <FormControl mt={4}>
+                <FormLabel>Neto No Gravado</FormLabel>
+                <Input
+                  type="number"
+                  value={editableComprobante.neto_no_gravado}
+                  onChange={(e) => handleChange('neto_no_gravado', Number(e.target.value))}
+                />
+              </FormControl>
+
+              <FormControl mt={4}>
+                <FormLabel>Exento</FormLabel>
+                <Input
+                  type="number"
+                  value={editableComprobante.exento}
+                  onChange={(e) => handleChange('exento', Number(e.target.value))}
+                />
+              </FormControl>
+
+              <FormControl mt={4}>
+                <FormLabel>Otros Tributos</FormLabel>
+                <Input
+                  type="number"
+                  value={editableComprobante.otros_tributos}
+                  onChange={(e) => handleChange('otros_tributos', Number(e.target.value))}
+                />
+              </FormControl>
+
+              <FormControl mt={4}>
+                <FormLabel>IVA</FormLabel>
+                <Input
+                  type="number"
+                  value={editableComprobante.iva}
+                  onChange={(e) => handleChange('iva', Number(e.target.value))}
                 />
               </FormControl>
 
