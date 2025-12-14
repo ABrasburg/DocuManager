@@ -8,8 +8,8 @@ import api from  '../../api'
 import { formatCurrency } from '../../Utils/formatNumber'
 
 import Navbar from '../Utils/navbar';
+import DescargarComprobantes from '../Utils/descargar_comprobantes';
 import SetCuentaCorriente from './Popup/set_cuenta_corrientes';
-import DescargarCuentaCorriente from './Popup/descargar_cuenta_corriente';
 import MarcarPagado from './Popup/marcar_pagado';
 
 interface Comprobante {
@@ -50,6 +50,7 @@ const GestorCuentaCorriente: React.FC = () => {
 
     const [isOpen, setIsOpen] = useState(false);
     const [isDownloadOpen, setIsDownloadOpen] = useState(false);
+    const [isDownloadImpagosOpen, setIsDownloadImpagosOpen] = useState(false);
     const [isPagadoModalOpen, setIsPagadoModalOpen] = useState(false);
     const [selectedComprobante, setSelectedComprobante] = useState<Comprobante | null>(null);
     const [selectedComprobantes, setSelectedComprobantes] = useState<Comprobante[]>([]);
@@ -131,37 +132,6 @@ const GestorCuentaCorriente: React.FC = () => {
         fetchComprobantes();
         setSelectedComprobantes([]);
         setSelectedRowKeys([]);
-      };
-
-      const handleDescargarImpagos = async () => {
-        try {
-          const response = await api.get('/comprobantes/cuenta_corriente/impagos/download', {
-            responseType: 'blob',
-          });
-
-          const disposition = response.headers["content-disposition"];
-          let filename = "comprobantes_impagos.csv";
-
-          if (disposition && disposition.includes("filename=")) {
-            const match = disposition.match(/filename="?([^"]+)"?/);
-            if (match?.[1]) {
-              filename = match[1];
-            }
-          }
-
-          const url = window.URL.createObjectURL(response.data);
-          const a = document.createElement('a');
-          a.href = url;
-          a.download = filename;
-          document.body.appendChild(a);
-          a.click();
-          a.remove();
-          window.URL.revokeObjectURL(url);
-
-          message.success('Descarga de comprobantes impagos completada');
-        } catch (error) {
-          message.error('Error al descargar comprobantes impagos');
-        }
       };
 
     const isSameOrAfter = (date: string, start: string) => {
@@ -358,7 +328,7 @@ const GestorCuentaCorriente: React.FC = () => {
                         <Button
                             type="primary"
                             icon={<DownloadOutlined />}
-                            onClick={handleDescargarImpagos}
+                            onClick={() => setIsDownloadImpagosOpen(true)}
                         >
                             Descargar Impagos
                         </Button>
@@ -394,9 +364,23 @@ const GestorCuentaCorriente: React.FC = () => {
                 emisores={emisores}
                 onSetCuentaCorriente={handleSetCuentaCorriente}
             />
-            <DescargarCuentaCorriente
+            <DescargarComprobantes
                 open={isDownloadOpen}
                 onClose={() => setIsDownloadOpen(false)}
+                emisores={emisoresCuentaCorrientes}
+                endpoint="/comprobantes/cuenta_corriente/download"
+                titulo="Descargar Comprobantes de Cuenta Corriente"
+                mensajeExito="Los comprobantes de cuenta corriente fueron descargados correctamente."
+                mensajeError="No se pudieron descargar los comprobantes de cuenta corriente."
+            />
+            <DescargarComprobantes
+                open={isDownloadImpagosOpen}
+                onClose={() => setIsDownloadImpagosOpen(false)}
+                emisores={emisoresCuentaCorrientes}
+                endpoint="/comprobantes/cuenta_corriente/impagos/download"
+                titulo="Descargar Comprobantes Impagos"
+                mensajeExito="Los comprobantes impagos fueron descargados correctamente."
+                mensajeError="No se pudieron descargar los comprobantes impagos."
             />
             <MarcarPagado
                 visible={isPagadoModalOpen}

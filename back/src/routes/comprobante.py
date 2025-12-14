@@ -519,10 +519,12 @@ def marcar_comprobante_como_pagado(
 async def download_comprobantes_cuenta_corriente(
     fecha_inicio: str,
     fecha_fin: str,
+    emisor_cuit: str = None,
     db: Session = Depends(get_db),
 ):
     """
     Descarga los comprobantes de cuenta corriente filtrados por fechas en formato CSV.
+    Opcionalmente filtra por emisor si se proporciona emisor_cuit.
     """
     try:
         fecha_inicio_dt = datetime.strptime(fecha_inicio, "%Y-%m-%d")
@@ -533,7 +535,7 @@ async def download_comprobantes_cuenta_corriente(
         raise HTTPException(status_code=400, detail="Formato de fecha inválido")
 
     comprobantes = repo.ComprobanteRepo(db).get_comprobantes_by_cuenta_corriente_and_fechas(
-        fecha_inicio_fmt, fecha_fin_fmt
+        fecha_inicio_fmt, fecha_fin_fmt, emisor_cuit
     )
 
     if not comprobantes:
@@ -614,12 +616,33 @@ async def download_comprobantes_cuenta_corriente(
 
 @comprobante.get("/comprobantes/cuenta_corriente/impagos/download")
 async def download_comprobantes_impagos(
+    fecha_inicio: str = None,
+    fecha_fin: str = None,
+    emisor_cuit: str = None,
     db: Session = Depends(get_db),
 ):
     """
-    Descarga todos los comprobantes impagos de cuenta corriente en formato CSV.
+    Descarga los comprobantes impagos de cuenta corriente en formato CSV.
+    Si se proporcionan fecha_inicio y fecha_fin, filtra por ese rango.
+    Si se proporciona emisor_cuit, filtra por ese emisor.
+    Si no se proporcionan filtros, descarga todos los comprobantes impagos.
     """
-    comprobantes = repo.ComprobanteRepo(db).get_comprobantes_impagos_cuenta_corriente()
+    # Convertir fechas si se proporcionan
+    fecha_inicio_fmt = None
+    fecha_fin_fmt = None
+
+    if fecha_inicio and fecha_fin:
+        try:
+            fecha_inicio_dt = datetime.strptime(fecha_inicio, "%Y-%m-%d")
+            fecha_fin_dt = datetime.strptime(fecha_fin, "%Y-%m-%d")
+            fecha_inicio_fmt = fecha_inicio_dt.strftime("%d/%m/%Y")
+            fecha_fin_fmt = fecha_fin_dt.strftime("%d/%m/%Y")
+        except ValueError:
+            raise HTTPException(status_code=400, detail="Formato de fecha inválido")
+
+    comprobantes = repo.ComprobanteRepo(db).get_comprobantes_impagos_cuenta_corriente(
+        fecha_inicio_fmt, fecha_fin_fmt, emisor_cuit
+    )
 
     if not comprobantes:
         raise HTTPException(status_code=404, detail="No se encontraron comprobantes impagos")
@@ -687,7 +710,11 @@ async def download_comprobantes_impagos(
             writer.writerow(formatted_row)
     csv_buffer.seek(0)
 
-    filename = f"comprobantes_impagos_{datetime.now().strftime('%Y%m%d')}.csv"
+    # Generar nombre de archivo según si hay filtro de fechas
+    if fecha_inicio and fecha_fin:
+        filename = f"comprobantes_impagos_{fecha_inicio}_a_{fecha_fin}.csv"
+    else:
+        filename = f"comprobantes_impagos_{datetime.now().strftime('%Y%m%d')}.csv"
 
     return StreamingResponse(
         iter([csv_buffer.getvalue()]),

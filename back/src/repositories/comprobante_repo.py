@@ -77,13 +77,19 @@ class ComprobanteRepo:
         from src.models.emisor import Emisor
         return self.db.query(Comprobante).join(Emisor).filter(Emisor.cuenta_corriente == True).all()
     
-    def get_comprobantes_by_cuenta_corriente_and_fechas(self, fecha_inicio: str, fecha_fin: str):
+    def get_comprobantes_by_cuenta_corriente_and_fechas(self, fecha_inicio: str, fecha_fin: str, emisor_cuit: str = None):
         from src.models.emisor import Emisor
         # Convertir a datetime
         fecha_inicio_dt = datetime.strptime(fecha_inicio, "%d/%m/%Y")
         fecha_fin_dt = datetime.strptime(fecha_fin, "%d/%m/%Y")
 
-        comprobantes = self.db.query(Comprobante).join(Emisor).filter(Emisor.cuenta_corriente == True).all()
+        query = self.db.query(Comprobante).join(Emisor).filter(Emisor.cuenta_corriente == True)
+
+        # Filtrar por emisor si se especifica
+        if emisor_cuit:
+            query = query.filter(Emisor.cuit == emisor_cuit)
+
+        comprobantes = query.all()
 
         resultado = []
         for c in comprobantes:
@@ -102,15 +108,46 @@ class ComprobanteRepo:
 
         return resultado
 
-    def get_comprobantes_impagos_cuenta_corriente(self):
+    def get_comprobantes_impagos_cuenta_corriente(self, fecha_inicio: str = None, fecha_fin: str = None, emisor_cuit: str = None):
         from src.models.emisor import Emisor
-        return (
+
+        query = (
             self.db.query(Comprobante)
             .join(Emisor)
             .filter(Emisor.cuenta_corriente == True)
             .filter((Comprobante.fecha_pago == None) | (Comprobante.fecha_pago == ""))
-            .all()
         )
+
+        # Filtrar por emisor si se especifica
+        if emisor_cuit:
+            query = query.filter(Emisor.cuit == emisor_cuit)
+
+        comprobantes = query.all()
+
+        # Si no se proporcionan fechas, devolver todos los impagos
+        if not fecha_inicio or not fecha_fin:
+            return comprobantes
+
+        # Filtrar por rango de fechas
+        fecha_inicio_dt = datetime.strptime(fecha_inicio, "%d/%m/%Y")
+        fecha_fin_dt = datetime.strptime(fecha_fin, "%d/%m/%Y")
+
+        resultado = []
+        for c in comprobantes:
+            try:
+                # Primero intentar formato YYYY-MM-DD (formato ISO)
+                try:
+                    fecha_c = datetime.strptime(c.fecha_emision, "%Y-%m-%d")
+                except ValueError:
+                    # Si falla, intentar formato DD/MM/YYYY
+                    fecha_c = datetime.strptime(c.fecha_emision, "%d/%m/%Y")
+
+                if fecha_inicio_dt <= fecha_c <= fecha_fin_dt:
+                    resultado.append(c)
+            except Exception:
+                continue  # Ignorar comprobantes con fecha inválida
+
+        return resultado
     
     def marcar_como_pagado(self, id: int, fecha_pago: str, numero_ticket: str):
         db_comprobante = self.db.query(Comprobante).filter(Comprobante.id == id).first()
