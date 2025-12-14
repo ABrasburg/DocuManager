@@ -4,7 +4,7 @@ from src.models.id_zeta import IdZeta
 
 
 def init_db(db: Session):
-    tipos_comprobantes = [(1, "Factura"), (3, "Nota de Crédito")]
+    tipos_comprobantes = [(1, "Factura"), (2, "Nota de Débito"), (3, "Nota de Crédito")]
     id_zetas  = [(8, 0), (9, 0)]
 
     # Crear los tipos de comprobantes

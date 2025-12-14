@@ -33,6 +33,14 @@ def get_zetas_by_fecha(fecha_desde: str, fecha_hasta: str, db: Session = Depends
     zeta_repo = ZetaRepo(db)
     return zeta_repo.get_zetas_by_fecha(fecha_desde, fecha_hasta)
 
+@zeta.put("/zeta/{id}", response_model=zeta_schema.Zeta)
+def update_zeta(id: int, zeta_data: zeta_schema.ZetaCreate, db: Session = Depends(get_db)):
+    zeta_repo = ZetaRepo(db)
+    db_zeta = zeta_repo.update_zeta(id, zeta_data)
+    if not db_zeta:
+        raise HTTPException(status_code=404, detail="Zeta not found")
+    return db_zeta
+
 @zeta.delete("/zeta/{id}", response_model=zeta_schema.Zeta)
 def delete_zeta(id: int, db: Session = Depends(get_db)):
     zeta_repo = ZetaRepo(db)
@@ -73,7 +81,7 @@ async def download_zetas(
     csv_buffer = StringIO()
     if data:
         fieldnames = ["Fecha", "Punto de Venta", "Número", "Último Ticket", "Exento", "IVA", "Perfumería", "Medicamentos IVA", "Total"]
-        writer = csv.DictWriter(csv_buffer, fieldnames=fieldnames, delimiter=';', quotechar='"', quoting=csv.QUOTE_NONNUMERIC)
+        writer = csv.DictWriter(csv_buffer, fieldnames=fieldnames, delimiter=';', quotechar='"', quoting=csv.QUOTE_MINIMAL)
         writer.writeheader()
         for row in data:
             # Convertir números a formato con coma decimal

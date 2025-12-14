@@ -356,8 +356,8 @@ async def upload_comprobantes(
                         tipo_doc=str(row["Tipo Doc. Emisor"]),
                     ),
                     tipo_comprobante=schemas.TipoComprobanteCreate(
-                        tipo_comprobante=1 if row["Tipo de Comprobante"] == "1" or row["Tipo de Comprobante"] == "Factura" else (3 if row["Tipo de Comprobante"] == "3" or row["Tipo de Comprobante"] == "Nota de Crédito" else safe_int(row["Tipo de Comprobante"], 1)),
-                        nombre=f"Tipo-{1 if row['Tipo de Comprobante'] == '1' or row['Tipo de Comprobante'] == 'Factura' else (3 if row['Tipo de Comprobante'] == '3' or row['Tipo de Comprobante'] == 'Nota de Crédito' else safe_int(row['Tipo de Comprobante'], 1))}", # Si no existe igual no lo crea
+                        tipo_comprobante=1 if row["Tipo de Comprobante"] == "1" or row["Tipo de Comprobante"] == "Factura" else (2 if row["Tipo de Comprobante"] == "2" or row["Tipo de Comprobante"] == "Nota de Débito" else (3 if row["Tipo de Comprobante"] == "3" or row["Tipo de Comprobante"] == "Nota de Crédito" else safe_int(row["Tipo de Comprobante"], 1))),
+                        nombre=f"Tipo-{1 if row['Tipo de Comprobante'] == '1' or row['Tipo de Comprobante'] == 'Factura' else (2 if row['Tipo de Comprobante'] == '2' or row['Tipo de Comprobante'] == 'Nota de Débito' else (3 if row['Tipo de Comprobante'] == '3' or row['Tipo de Comprobante'] == 'Nota de Crédito' else safe_int(row['Tipo de Comprobante'], 1)))}", # Si no existe igual no lo crea
                     ),
                 )
 

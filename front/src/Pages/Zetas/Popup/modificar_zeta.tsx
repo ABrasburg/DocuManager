@@ -249,7 +249,7 @@ const ModificarZeta: React.FC<Props> = ({ open, onClose, zeta, editar, nuevo, on
             />
           </FormControl>
           <FormControl isRequired mt={4}>
-            <FormLabel>Perfumería (20% del IVA)</FormLabel>
+            <FormLabel>Perfumería</FormLabel>
             <Input
               type="number"
               value={perfumeria || ''}
@@ -257,7 +257,7 @@ const ModificarZeta: React.FC<Props> = ({ open, onClose, zeta, editar, nuevo, on
             />
           </FormControl>
           <FormControl isRequired mt={4}>
-            <FormLabel>Medicamentos IVA (80% del IVA)</FormLabel>
+            <FormLabel>Medicamentos IVA</FormLabel>
             <Input
               type="number"
               value={medicamentos_iva || ''}
@@ -265,7 +265,7 @@ const ModificarZeta: React.FC<Props> = ({ open, onClose, zeta, editar, nuevo, on
             />
           </FormControl>
           <FormControl isRequired mt={4}>
-            <FormLabel>Total (Exento + IVA)</FormLabel>
+            <FormLabel>Total</FormLabel>
             <Input
               type="number"
               value={total || ''}
