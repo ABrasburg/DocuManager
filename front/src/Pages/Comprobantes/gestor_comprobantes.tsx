@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Table, Button, message, Upload, DatePicker, Space, Spin, Modal } from 'antd';
+import { Table, Button, message, Upload, DatePicker, Space, Spin } from 'antd';
 import { UploadOutlined, DeleteOutlined, MoreOutlined, FormOutlined, DownloadOutlined } from "@ant-design/icons";
 import dayjs from 'dayjs';
 import '@inovua/reactdatagrid-community/index.css';
@@ -268,7 +268,7 @@ const GestorComprobantes: React.FC = () => {
                 if (window.confirm('¿Estás seguro de que deseas eliminar este comprobante? Esta acción no se puede deshacer.')) {
                   (async () => {
                     try {
-                      const response = await api.delete(`/comprobante/${record.id}`);
+                      await api.delete(`/comprobante/${record.id}`);
                       message.success('Comprobante eliminado');
                       await fetchComprobantes();
                     } catch (error: any) {
