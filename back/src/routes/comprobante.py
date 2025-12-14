@@ -356,8 +356,8 @@ async def upload_comprobantes(
                         tipo_doc=str(row["Tipo Doc. Emisor"]),
                     ),
                     tipo_comprobante=schemas.TipoComprobanteCreate(
-                        tipo_comprobante=1 if row["Tipo de Comprobante"] == "1" or row["Tipo de Comprobante"] == "Factura" else (3 if row["Tipo de Comprobante"] == "3" or row["Tipo de Comprobante"] == "Nota de Crédito" else safe_int(row["Tipo de Comprobante"], 1)),
-                        nombre=f"Tipo-{1 if row['Tipo de Comprobante'] == '1' or row['Tipo de Comprobante'] == 'Factura' else (3 if row['Tipo de Comprobante'] == '3' or row['Tipo de Comprobante'] == 'Nota de Crédito' else safe_int(row['Tipo de Comprobante'], 1))}", # Si no existe igual no lo crea
+                        tipo_comprobante=1 if row["Tipo de Comprobante"] == "1" or row["Tipo de Comprobante"] == "Factura" else (2 if row["Tipo de Comprobante"] == "2" or row["Tipo de Comprobante"] == "Nota de Débito" else (3 if row["Tipo de Comprobante"] == "3" or row["Tipo de Comprobante"] == "Nota de Crédito" else safe_int(row["Tipo de Comprobante"], 1))),
+                        nombre=f"Tipo-{1 if row['Tipo de Comprobante'] == '1' or row['Tipo de Comprobante'] == 'Factura' else (2 if row['Tipo de Comprobante'] == '2' or row['Tipo de Comprobante'] == 'Nota de Débito' else (3 if row['Tipo de Comprobante'] == '3' or row['Tipo de Comprobante'] == 'Nota de Crédito' else safe_int(row['Tipo de Comprobante'], 1)))}", # Si no existe igual no lo crea
                     ),
                 )
 
@@ -519,10 +519,12 @@ def marcar_comprobante_como_pagado(
 async def download_comprobantes_cuenta_corriente(
     fecha_inicio: str,
     fecha_fin: str,
+    emisor_cuit: str = None,
     db: Session = Depends(get_db),
 ):
     """
     Descarga los comprobantes de cuenta corriente filtrados por fechas en formato CSV.
+    Opcionalmente filtra por emisor si se proporciona emisor_cuit.
     """
     try:
         fecha_inicio_dt = datetime.strptime(fecha_inicio, "%Y-%m-%d")
@@ -533,7 +535,7 @@ async def download_comprobantes_cuenta_corriente(
         raise HTTPException(status_code=400, detail="Formato de fecha inválido")
 
     comprobantes = repo.ComprobanteRepo(db).get_comprobantes_by_cuenta_corriente_and_fechas(
-        fecha_inicio_fmt, fecha_fin_fmt
+        fecha_inicio_fmt, fecha_fin_fmt, emisor_cuit
     )
 
     if not comprobantes:
@@ -606,6 +608,114 @@ async def download_comprobantes_cuenta_corriente(
 
     filename = f"cuenta_corriente_{fecha_inicio}_a_{fecha_fin}.csv"
     
+    return StreamingResponse(
+        iter([csv_buffer.getvalue()]),
+        media_type="text/csv",
+        headers={"Content-Disposition": f"attachment; filename={filename}"}
+    )
+
+@comprobante.get("/comprobantes/cuenta_corriente/impagos/download")
+async def download_comprobantes_impagos(
+    fecha_inicio: str = None,
+    fecha_fin: str = None,
+    emisor_cuit: str = None,
+    db: Session = Depends(get_db),
+):
+    """
+    Descarga los comprobantes impagos de cuenta corriente en formato CSV.
+    Si se proporcionan fecha_inicio y fecha_fin, filtra por ese rango.
+    Si se proporciona emisor_cuit, filtra por ese emisor.
+    Si no se proporcionan filtros, descarga todos los comprobantes impagos.
+    """
+    # Convertir fechas si se proporcionan
+    fecha_inicio_fmt = None
+    fecha_fin_fmt = None
+
+    if fecha_inicio and fecha_fin:
+        try:
+            fecha_inicio_dt = datetime.strptime(fecha_inicio, "%Y-%m-%d")
+            fecha_fin_dt = datetime.strptime(fecha_fin, "%Y-%m-%d")
+            fecha_inicio_fmt = fecha_inicio_dt.strftime("%d/%m/%Y")
+            fecha_fin_fmt = fecha_fin_dt.strftime("%d/%m/%Y")
+        except ValueError:
+            raise HTTPException(status_code=400, detail="Formato de fecha inválido")
+
+    comprobantes = repo.ComprobanteRepo(db).get_comprobantes_impagos_cuenta_corriente(
+        fecha_inicio_fmt, fecha_fin_fmt, emisor_cuit
+    )
+
+    if not comprobantes:
+        raise HTTPException(status_code=404, detail="No se encontraron comprobantes impagos")
+
+    tipos_comprobante = TipoComprobanteRepo(db).get_tipos_comprobantes()
+    emisores = EmisorRepo(db).get_emisores()
+
+    data = []
+    for comprobante in comprobantes:
+        tipo_comprobante = next(
+            (t for t in tipos_comprobante if t.id == comprobante.tipo_comprobante_id), None
+        )
+        emisor = next(
+            (e for e in emisores if e.id == comprobante.emisor_id), None
+        )
+
+        # Formatear fecha a DD/MM/YYYY
+        fecha_formateada = comprobante.fecha_emision
+        try:
+            # Intentar parsear desde formato YYYY-MM-DD
+            fecha_dt = datetime.strptime(comprobante.fecha_emision, "%Y-%m-%d")
+            fecha_formateada = fecha_dt.strftime("%d/%m/%Y")
+        except ValueError:
+            # Si ya está en formato DD/MM/YYYY, mantenerlo
+            try:
+                datetime.strptime(comprobante.fecha_emision, "%d/%m/%Y")
+                fecha_formateada = comprobante.fecha_emision
+            except ValueError:
+                # Si no es ninguno de los formatos esperados, usar tal como está
+                pass
+
+        data.append({
+            "Fecha de Emisión": fecha_formateada,
+            "Tipo de Comprobante": tipo_comprobante.nombre if tipo_comprobante else "",
+            "Punto de Venta": comprobante.punto_venta,
+            "Número Desde": comprobante.numero_desde,
+            "Número Hasta": comprobante.numero_hasta,
+            "Cód. Autorización": comprobante.cod_autorizacion,
+            "Tipo Doc. Emisor": emisor.tipo_doc if emisor else "",
+            "Nro. Doc. Emisor": emisor.cuit if emisor else "",
+            "Denominación Emisor": emisor.denominacion if emisor else "",
+            "Tipo Cambio": comprobante.tipo_cambio,
+            "Moneda": comprobante.moneda,
+            "Imp. Neto Gravado": comprobante.neto_gravado or 0,
+            "Imp. Neto No Gravado": comprobante.neto_no_gravado or 0,
+            "Imp. Op. Exentas": comprobante.exento or 0,
+            "IVA": comprobante.iva or 0,
+            "Otros Tributos": comprobante.otros_tributos or 0,
+            "Imp. Total": comprobante.total or 0,
+        })
+
+    csv_buffer = StringIO()
+    if data:
+        fieldnames = data[0].keys()
+        writer = csv.DictWriter(csv_buffer, fieldnames=fieldnames, delimiter=';', quotechar='"', quoting=csv.QUOTE_NONNUMERIC)
+        writer.writeheader()
+        for row in data:
+            # Convertir números a formato con coma decimal
+            formatted_row = {}
+            for key, value in row.items():
+                if isinstance(value, (int, float)) and key.startswith('Imp.'):
+                    formatted_row[key] = str(value).replace('.', ',')
+                else:
+                    formatted_row[key] = value
+            writer.writerow(formatted_row)
+    csv_buffer.seek(0)
+
+    # Generar nombre de archivo según si hay filtro de fechas
+    if fecha_inicio and fecha_fin:
+        filename = f"comprobantes_impagos_{fecha_inicio}_a_{fecha_fin}.csv"
+    else:
+        filename = f"comprobantes_impagos_{datetime.now().strftime('%Y%m%d')}.csv"
+
     return StreamingResponse(
         iter([csv_buffer.getvalue()]),
         media_type="text/csv",

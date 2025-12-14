@@ -27,6 +27,16 @@ class ZetaRepo:
             .all()
         )
 
+    def update_zeta(self, id: int, zeta: ZetaCreate):
+        db_zeta = self.db.query(Zeta).filter(Zeta.id == id).first()
+        if db_zeta:
+            for key, value in zeta.model_dump().items():
+                setattr(db_zeta, key, value)
+            self.db.commit()
+            self.db.refresh(db_zeta)
+            return db_zeta
+        return None
+
     def delete_zeta(self, id: int):
         db_zeta = self.db.query(Zeta).filter(Zeta.id == id).first()
         if db_zeta:

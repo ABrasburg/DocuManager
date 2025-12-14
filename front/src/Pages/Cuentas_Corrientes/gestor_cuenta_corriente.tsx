@@ -6,10 +6,11 @@ import '@inovua/reactdatagrid-community/index.css';
 
 import api from  '../../api'
 import { formatCurrency } from '../../Utils/formatNumber'
+import { formatDateArgentina } from '../../Utils/formatDate'
 
 import Navbar from '../Utils/navbar';
+import DescargarComprobantes from '../Utils/descargar_comprobantes';
 import SetCuentaCorriente from './Popup/set_cuenta_corrientes';
-import DescargarCuentaCorriente from './Popup/descargar_cuenta_corriente';
 import MarcarPagado from './Popup/marcar_pagado';
 
 interface Comprobante {
@@ -50,6 +51,7 @@ const GestorCuentaCorriente: React.FC = () => {
 
     const [isOpen, setIsOpen] = useState(false);
     const [isDownloadOpen, setIsDownloadOpen] = useState(false);
+    const [isDownloadImpagosOpen, setIsDownloadImpagosOpen] = useState(false);
     const [isPagadoModalOpen, setIsPagadoModalOpen] = useState(false);
     const [selectedComprobante, setSelectedComprobante] = useState<Comprobante | null>(null);
     const [selectedComprobantes, setSelectedComprobantes] = useState<Comprobante[]>([]);
@@ -158,6 +160,7 @@ const GestorCuentaCorriente: React.FC = () => {
           title: 'Fecha',
           dataIndex: 'fecha_emision',
           key: 'fecha',
+          render: (_: any, record: Comprobante) => formatDateArgentina(record.fecha_emision),
           filterDropdown: ({ setSelectedKeys, selectedKeys, confirm, clearFilters }: any) => (
             <div style={{ padding: 8 }}>
               <DatePicker.RangePicker
@@ -258,7 +261,7 @@ const GestorCuentaCorriente: React.FC = () => {
                 <div>
                   <Tag color="green">Pagado</Tag>
                   <div style={{ fontSize: '11px', color: '#666' }}>
-                    {record.fecha_pago}
+                    {formatDateArgentina(record.fecha_pago)}
                   </div>
                   {record.numero_ticket && (
                     <div style={{ fontSize: '11px', color: '#666' }}>
@@ -325,6 +328,13 @@ const GestorCuentaCorriente: React.FC = () => {
                             Descargar CSV
                         </Button>
                         <Button
+                            type="primary"
+                            icon={<DownloadOutlined />}
+                            onClick={() => setIsDownloadImpagosOpen(true)}
+                        >
+                            Descargar Impagos
+                        </Button>
+                        <Button
                             type={selectedComprobantes.length === 0 ? "default" : "primary"}
                             icon={<DollarOutlined />}
                             onClick={handleMarcarSeleccionadosPagado}
@@ -356,9 +366,23 @@ const GestorCuentaCorriente: React.FC = () => {
                 emisores={emisores}
                 onSetCuentaCorriente={handleSetCuentaCorriente}
             />
-            <DescargarCuentaCorriente
+            <DescargarComprobantes
                 open={isDownloadOpen}
                 onClose={() => setIsDownloadOpen(false)}
+                emisores={emisoresCuentaCorrientes}
+                endpoint="/comprobantes/cuenta_corriente/download"
+                titulo="Descargar Comprobantes de Cuenta Corriente"
+                mensajeExito="Los comprobantes de cuenta corriente fueron descargados correctamente."
+                mensajeError="No se pudieron descargar los comprobantes de cuenta corriente."
+            />
+            <DescargarComprobantes
+                open={isDownloadImpagosOpen}
+                onClose={() => setIsDownloadImpagosOpen(false)}
+                emisores={emisoresCuentaCorrientes}
+                endpoint="/comprobantes/cuenta_corriente/impagos/download"
+                titulo="Descargar Comprobantes Impagos"
+                mensajeExito="Los comprobantes impagos fueron descargados correctamente."
+                mensajeError="No se pudieron descargar los comprobantes impagos."
             />
             <MarcarPagado
                 visible={isPagadoModalOpen}
