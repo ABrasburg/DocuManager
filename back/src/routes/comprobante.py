@@ -612,6 +612,89 @@ async def download_comprobantes_cuenta_corriente(
         headers={"Content-Disposition": f"attachment; filename={filename}"}
     )
 
+@comprobante.get("/comprobantes/cuenta_corriente/impagos/download")
+async def download_comprobantes_impagos(
+    db: Session = Depends(get_db),
+):
+    """
+    Descarga todos los comprobantes impagos de cuenta corriente en formato CSV.
+    """
+    comprobantes = repo.ComprobanteRepo(db).get_comprobantes_impagos_cuenta_corriente()
+
+    if not comprobantes:
+        raise HTTPException(status_code=404, detail="No se encontraron comprobantes impagos")
+
+    tipos_comprobante = TipoComprobanteRepo(db).get_tipos_comprobantes()
+    emisores = EmisorRepo(db).get_emisores()
+
+    data = []
+    for comprobante in comprobantes:
+        tipo_comprobante = next(
+            (t for t in tipos_comprobante if t.id == comprobante.tipo_comprobante_id), None
+        )
+        emisor = next(
+            (e for e in emisores if e.id == comprobante.emisor_id), None
+        )
+
+        # Formatear fecha a DD/MM/YYYY
+        fecha_formateada = comprobante.fecha_emision
+        try:
+            # Intentar parsear desde formato YYYY-MM-DD
+            fecha_dt = datetime.strptime(comprobante.fecha_emision, "%Y-%m-%d")
+            fecha_formateada = fecha_dt.strftime("%d/%m/%Y")
+        except ValueError:
+            # Si ya está en formato DD/MM/YYYY, mantenerlo
+            try:
+                datetime.strptime(comprobante.fecha_emision, "%d/%m/%Y")
+                fecha_formateada = comprobante.fecha_emision
+            except ValueError:
+                # Si no es ninguno de los formatos esperados, usar tal como está
+                pass
+
+        data.append({
+            "Fecha de Emisión": fecha_formateada,
+            "Tipo de Comprobante": tipo_comprobante.nombre if tipo_comprobante else "",
+            "Punto de Venta": comprobante.punto_venta,
+            "Número Desde": comprobante.numero_desde,
+            "Número Hasta": comprobante.numero_hasta,
+            "Cód. Autorización": comprobante.cod_autorizacion,
+            "Tipo Doc. Emisor": emisor.tipo_doc if emisor else "",
+            "Nro. Doc. Emisor": emisor.cuit if emisor else "",
+            "Denominación Emisor": emisor.denominacion if emisor else "",
+            "Tipo Cambio": comprobante.tipo_cambio,
+            "Moneda": comprobante.moneda,
+            "Imp. Neto Gravado": comprobante.neto_gravado or 0,
+            "Imp. Neto No Gravado": comprobante.neto_no_gravado or 0,
+            "Imp. Op. Exentas": comprobante.exento or 0,
+            "IVA": comprobante.iva or 0,
+            "Otros Tributos": comprobante.otros_tributos or 0,
+            "Imp. Total": comprobante.total or 0,
+        })
+
+    csv_buffer = StringIO()
+    if data:
+        fieldnames = data[0].keys()
+        writer = csv.DictWriter(csv_buffer, fieldnames=fieldnames, delimiter=';', quotechar='"', quoting=csv.QUOTE_NONNUMERIC)
+        writer.writeheader()
+        for row in data:
+            # Convertir números a formato con coma decimal
+            formatted_row = {}
+            for key, value in row.items():
+                if isinstance(value, (int, float)) and key.startswith('Imp.'):
+                    formatted_row[key] = str(value).replace('.', ',')
+                else:
+                    formatted_row[key] = value
+            writer.writerow(formatted_row)
+    csv_buffer.seek(0)
+
+    filename = f"comprobantes_impagos_{datetime.now().strftime('%Y%m%d')}.csv"
+
+    return StreamingResponse(
+        iter([csv_buffer.getvalue()]),
+        media_type="text/csv",
+        headers={"Content-Disposition": f"attachment; filename={filename}"}
+    )
+
 @comprobante.get("/comprobantes/reporte_afip")
 async def generar_reporte_afip(
     fecha_inicio: str,

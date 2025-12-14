@@ -94,13 +94,23 @@ class ComprobanteRepo:
                 except ValueError:
                     # Si falla, intentar formato DD/MM/YYYY
                     fecha_c = datetime.strptime(c.fecha_emision, "%d/%m/%Y")
-                
+
                 if fecha_inicio_dt <= fecha_c <= fecha_fin_dt:
                     resultado.append(c)
             except Exception:
                 continue  # Ignorar comprobantes con fecha inválida
 
         return resultado
+
+    def get_comprobantes_impagos_cuenta_corriente(self):
+        from src.models.emisor import Emisor
+        return (
+            self.db.query(Comprobante)
+            .join(Emisor)
+            .filter(Emisor.cuenta_corriente == True)
+            .filter((Comprobante.fecha_pago == None) | (Comprobante.fecha_pago == ""))
+            .all()
+        )
     
     def marcar_como_pagado(self, id: int, fecha_pago: str, numero_ticket: str):
         db_comprobante = self.db.query(Comprobante).filter(Comprobante.id == id).first()

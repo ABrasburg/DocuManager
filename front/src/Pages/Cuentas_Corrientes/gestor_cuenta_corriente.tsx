@@ -133,6 +133,37 @@ const GestorCuentaCorriente: React.FC = () => {
         setSelectedRowKeys([]);
       };
 
+      const handleDescargarImpagos = async () => {
+        try {
+          const response = await api.get('/comprobantes/cuenta_corriente/impagos/download', {
+            responseType: 'blob',
+          });
+
+          const disposition = response.headers["content-disposition"];
+          let filename = "comprobantes_impagos.csv";
+
+          if (disposition && disposition.includes("filename=")) {
+            const match = disposition.match(/filename="?([^"]+)"?/);
+            if (match?.[1]) {
+              filename = match[1];
+            }
+          }
+
+          const url = window.URL.createObjectURL(response.data);
+          const a = document.createElement('a');
+          a.href = url;
+          a.download = filename;
+          document.body.appendChild(a);
+          a.click();
+          a.remove();
+          window.URL.revokeObjectURL(url);
+
+          message.success('Descarga de comprobantes impagos completada');
+        } catch (error) {
+          message.error('Error al descargar comprobantes impagos');
+        }
+      };
+
     const isSameOrAfter = (date: string, start: string) => {
         return dayjs(date).isSame(start, 'day') || dayjs(date).isAfter(start, 'day');
       };
@@ -323,6 +354,13 @@ const GestorCuentaCorriente: React.FC = () => {
                             onClick={() => setIsDownloadOpen(true)}
                         >
                             Descargar CSV
+                        </Button>
+                        <Button
+                            type="primary"
+                            icon={<DownloadOutlined />}
+                            onClick={handleDescargarImpagos}
+                        >
+                            Descargar Impagos
                         </Button>
                         <Button
                             type={selectedComprobantes.length === 0 ? "default" : "primary"}
