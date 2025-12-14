@@ -6,6 +6,7 @@ import '@inovua/reactdatagrid-community/index.css';
 
 import api from  '../../api'
 import { formatCurrency } from '../../Utils/formatNumber'
+import { formatDateArgentina } from '../../Utils/formatDate'
 
 import Navbar from '../Utils/navbar';
 import ExitoPopup from '../Utils/exito_popup';
@@ -149,6 +150,7 @@ const GestorComprobantes: React.FC = () => {
       title: 'Fecha',
       dataIndex: 'fecha_emision',
       key: 'fecha',
+      render: (_: any, record: Comprobante) => formatDateArgentina(record.fecha_emision),
       sorter: (a: Comprobante, b: Comprobante) => {
         return dayjs(a.fecha_emision).unix() - dayjs(b.fecha_emision).unix();
       },

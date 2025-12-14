@@ -11,6 +11,7 @@ import {
   Text,
   Stack,
 } from '@chakra-ui/react';
+import { formatDateArgentina } from '../../../Utils/formatDate';
 
 interface Comprobante {
   id: number;
@@ -47,7 +48,7 @@ const ComprobantePopup: React.FC<Props> = ({ comprobante, onClose, open }) => {
         <ModalBody>
           {comprobante ? (
             <Stack spacing={3}>
-              <Text><strong>Fecha emisión:</strong> {comprobante.fecha_emision}</Text>
+              <Text><strong>Fecha emisión:</strong> {formatDateArgentina(comprobante.fecha_emision)}</Text>
               <Text><strong>Punto de venta:</strong> {comprobante.punto_venta}</Text>
               <Text><strong>Número desde:</strong> {comprobante.numero_desde}</Text>
               <Text><strong>Número hasta:</strong> {comprobante.numero_hasta}</Text>

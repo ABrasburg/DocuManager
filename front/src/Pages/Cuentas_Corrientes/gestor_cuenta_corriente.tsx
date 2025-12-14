@@ -6,6 +6,7 @@ import '@inovua/reactdatagrid-community/index.css';
 
 import api from  '../../api'
 import { formatCurrency } from '../../Utils/formatNumber'
+import { formatDateArgentina } from '../../Utils/formatDate'
 
 import Navbar from '../Utils/navbar';
 import DescargarComprobantes from '../Utils/descargar_comprobantes';
@@ -159,6 +160,7 @@ const GestorCuentaCorriente: React.FC = () => {
           title: 'Fecha',
           dataIndex: 'fecha_emision',
           key: 'fecha',
+          render: (_: any, record: Comprobante) => formatDateArgentina(record.fecha_emision),
           filterDropdown: ({ setSelectedKeys, selectedKeys, confirm, clearFilters }: any) => (
             <div style={{ padding: 8 }}>
               <DatePicker.RangePicker
@@ -259,7 +261,7 @@ const GestorCuentaCorriente: React.FC = () => {
                 <div>
                   <Tag color="green">Pagado</Tag>
                   <div style={{ fontSize: '11px', color: '#666' }}>
-                    {record.fecha_pago}
+                    {formatDateArgentina(record.fecha_pago)}
                   </div>
                   {record.numero_ticket && (
                     <div style={{ fontSize: '11px', color: '#666' }}>

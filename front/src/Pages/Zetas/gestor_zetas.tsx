@@ -11,6 +11,7 @@ import { Modal, ModalOverlay, ModalContent, ModalHeader, ModalFooter, ModalBody,
 
 import  api from '../../api';
 import { formatCurrency } from '../../Utils/formatNumber';
+import { formatDateArgentina } from '../../Utils/formatDate';
 
 interface Zeta {
     id: number;
@@ -121,11 +122,11 @@ const GestorZetas: React.FC = () => {
     };      
 
     const columns = [
-        { 
-            title: 'Fecha', 
-            dataIndex: 'fecha', 
+        {
+            title: 'Fecha',
+            dataIndex: 'fecha',
             key: 'fecha',
-            render: (text: number) => dayjs(text).format('DD/MM/YYYY'),
+            render: (text: number) => formatDateArgentina(text),
             filterDropdown: ({ setSelectedKeys, selectedKeys, confirm, clearFilters }: any) => (
             <div style={{ padding: 8 }}>
                 <DatePicker.RangePicker
