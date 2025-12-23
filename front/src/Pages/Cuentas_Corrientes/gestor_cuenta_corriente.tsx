@@ -246,10 +246,8 @@ const GestorCuentaCorriente: React.FC = () => {
           title: 'Total',
           dataIndex: 'total',
           key: 'total',
-          render: (total: number, record: Comprobante) => {
-            const signo = record.tipo_comprobante?.nombre === "Nota de Crédito" ? -1 : 1;
-            const totalConSigno = signo * (total || 0);
-            return formatCurrency(totalConSigno);
+          render: (total: number) => {
+            return formatCurrency(total || 0);
           },
         },
         {
