@@ -20,10 +20,11 @@ export const formatDateArgentina = (dateString: string | number | null | undefin
         return dateString;
       }
 
-      // Si está en formato YYYY-MM-DD
-      if (/^\d{4}-\d{2}-\d{2}/.test(dateString)) {
+      // Si está en formato YYYY-MM-DD (sin hora)
+      if (/^\d{4}-\d{2}-\d{2}$/.test(dateString)) {
         date = new Date(dateString + 'T00:00:00'); // Agregar hora para evitar problemas de zona horaria
       } else {
+        // Para cualquier otro formato (incluyendo ISO con hora: YYYY-MM-DDTHH:mm:ss)
         date = new Date(dateString);
       }
     }

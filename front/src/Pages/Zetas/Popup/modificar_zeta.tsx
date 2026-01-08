@@ -18,7 +18,7 @@ import  api from '../../../api';
 
 interface Zeta {
     id: number;
-    fecha: number;
+    fecha: string;
     punto_de_venta: number;
     numero: number;
     ultimo_ticket: number;
@@ -40,7 +40,7 @@ interface Props {
   }
   
 const ModificarZeta: React.FC<Props> = ({ open, onClose, zeta, editar, nuevo, onCreate, onEdit }) => {
-  const [fecha, setFecha] = useState<number>(zeta.fecha);
+  const [fecha, setFecha] = useState<string>(zeta.fecha);
   const [punto_de_venta, setPuntoVenta] = useState<number>(zeta.punto_de_venta);
   const [numero, setNumero] = useState<number>(zeta.numero);
   const [ultimo_ticket, setUltimoTicket] = useState<number>(zeta.ultimo_ticket);
@@ -118,7 +118,7 @@ const ModificarZeta: React.FC<Props> = ({ open, onClose, zeta, editar, nuevo, on
     event.preventDefault();
     try {
       const response = await api.post('/zeta', {
-        fecha: new Date(fecha).toISOString().split('T')[0],
+        fecha,
         punto_de_venta,
         numero,
         ultimo_ticket,
@@ -162,7 +162,7 @@ const ModificarZeta: React.FC<Props> = ({ open, onClose, zeta, editar, nuevo, on
       setMedicamentosIva(zeta.medicamentos_iva);
       setTotal(zeta.total);
     } else if (nuevo) {
-      setFecha(Date.now());
+      setFecha(new Date().toISOString());
       setPuntoVenta(NaN);
       setNumero(0);
       setUltimoTicket(0);
@@ -185,8 +185,8 @@ const ModificarZeta: React.FC<Props> = ({ open, onClose, zeta, editar, nuevo, on
             <FormLabel>Fecha</FormLabel>
             <Input
               type="date"
-              value={new Date(fecha).toISOString().split('T')[0]}
-              onChange={(e) => setFecha(new Date(e.target.value).getTime())}
+              value={fecha ? fecha.split('T')[0] : ''}
+              onChange={(e) => setFecha(new Date(e.target.value + 'T00:00:00').toISOString())}
             />
           </FormControl>
           <FormControl isRequired mt={4}>
