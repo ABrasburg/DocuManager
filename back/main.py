@@ -1,5 +1,8 @@
 import os
-from fastapi import FastAPI
+import hmac
+import hashlib
+import subprocess
+from fastapi import FastAPI, Request, HTTPException
 from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
 from db import SessionLocal, engine, Base
@@ -46,6 +49,27 @@ def init():
 
 
 init()
+
+
+@app.post("/webhook")
+async def github_webhook(request: Request):
+    secret_file = os.path.join(os.path.dirname(__file__), "..", ".webhook_secret")
+    try:
+        with open(secret_file) as f:
+            secret = f.read().strip().encode()
+    except FileNotFoundError:
+        raise HTTPException(status_code=500, detail="Webhook secret not configured")
+
+    signature = request.headers.get("X-Hub-Signature-256", "")
+    body = await request.body()
+    expected = "sha256=" + hmac.new(secret, body, hashlib.sha256).hexdigest()
+
+    if not hmac.compare_digest(signature, expected):
+        raise HTTPException(status_code=401, detail="Invalid signature")
+
+    update_script = os.path.join(os.path.dirname(__file__), "..", "update.sh")
+    subprocess.Popen(["bash", update_script], start_new_session=True)
+    return {"status": "update started"}
 
 
 @app.exception_handler(Exception)
