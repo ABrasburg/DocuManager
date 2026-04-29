@@ -9,12 +9,14 @@ from db import SessionLocal, engine, Base
 import uvicorn
 
 from src.models import comprobante
+from src.models import farmacia as farmacia_model
 
 from src.init_db.init_db import init_db
 from src.routes.tipo_comprobante import tipo_comprobante
 from src.routes.emisor import emisor
 from src.routes.comprobante import comprobante
 from src.routes.zeta import zeta
+from src.routes.farmacia import farmacia
 
 app = FastAPI(
     title="GIO API",
@@ -22,6 +24,7 @@ app = FastAPI(
     version="1.0.0",
 )
 
+app.include_router(farmacia)
 app.include_router(tipo_comprobante)
 app.include_router(emisor)
 app.include_router(comprobante)

@@ -29,3 +29,5 @@ class Comprobante(Base):
 
     tipo_comprobante_id = Column(Integer, ForeignKey("tipo_comprobante.id"))
     tipo_comprobante = relationship("TipoComprobante", back_populates="comprobantes", lazy='joined')
+
+    farmacia_id = Column(Integer, ForeignKey("farmacia.id"), nullable=False)

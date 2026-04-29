@@ -1,26 +1,27 @@
 import React from "react";
-import { createBrowserRouter, RouterProvider, Outlet } from "react-router-dom";
+import { createBrowserRouter, RouterProvider, Outlet, Navigate } from "react-router-dom";
 import GestorComprobantes from "../Pages/Comprobantes/gestor_comprobantes";
 import GestorCuentaCorriente from "../Pages/Cuentas_Corrientes/gestor_cuenta_corriente";
 import GestorEmisores from "../Pages/Emisores/gestor_emisores";
 import GestorZetas from "../Pages/Zetas/gestor_zetas";
 import ReporteAFIP from "../Pages/Reportes/reporte_afip";
+import SeleccionFarmacia from "../Pages/Farmacias/seleccion_farmacia";
+import { useFarmacia } from "../context/FarmaciaContext";
 
-// Este componente es el layout que envolverá las rutas hijas
-const PageWrapper = () => {
-  return (
-    <>
-      {/* Si querés agregar transiciones o animaciones, hacelo acá */}
-      <Outlet />
-    </>
-  );
+const ProtectedLayout: React.FC = () => {
+  const { farmacia } = useFarmacia();
+  if (!farmacia) return <Navigate to="/" replace />;
+  return <Outlet />;
 };
 
-// Definimos las rutas
 const router = createBrowserRouter([
   {
     path: "/",
-    element: <PageWrapper />,
+    element: <SeleccionFarmacia />,
+  },
+  {
+    path: "/app",
+    element: <ProtectedLayout />,
     children: [
       { path: "", element: <GestorComprobantes /> },
       { path: "gestor_comprobantes", element: <GestorComprobantes /> },
@@ -32,8 +33,6 @@ const router = createBrowserRouter([
   },
 ]);
 
-// Este componente envuelve el provider de rutas
-const AppRoutes = () => <RouterProvider router={router} />;
+const AppRoutes: React.FC = () => <RouterProvider router={router} />;
 
 export default AppRoutes;
-

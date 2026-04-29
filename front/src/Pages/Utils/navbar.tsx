@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import './navbar.css';
 import { useNavigate } from "react-router-dom";
 import Logo from '../../Imagenes/Logo.png';
+import { useFarmacia } from '../../context/FarmaciaContext';
 
 type LinkProps = {
   to: string;
@@ -28,13 +29,16 @@ const Link: React.FC<LinkProps> = ({ to, className, children, onClick }) => {
 
 const Navbar: React.FC = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const { farmacia, setFarmacia } = useFarmacia();
+  const navigate = useNavigate();
 
-  const toggleMenu = () => {
-    setIsMenuOpen(!isMenuOpen);
-  };
+  const toggleMenu = () => setIsMenuOpen(!isMenuOpen);
+  const closeMenu = () => setIsMenuOpen(false);
 
-  const closeMenu = () => {
-    setIsMenuOpen(false);
+  const handleCambiarFarmacia = () => {
+    setFarmacia(null);
+    navigate('/');
+    closeMenu();
   };
 
   return (
@@ -50,11 +54,20 @@ const Navbar: React.FC = () => {
       </button>
 
       <div className={`navbar-right ${isMenuOpen ? 'active' : ''}`}>
-        <Link to="/gestor_emisores" className="navbar-link" onClick={closeMenu}>Emisores</Link>
-        <Link to="/gestor_cuenta_corriente" className="navbar-link" onClick={closeMenu}>Cuenta Corriente</Link>
-        <Link to="/gestor_zetas" className="navbar-link" onClick={closeMenu}>Zetas</Link>
-        <Link to="/gestor_comprobantes" className="navbar-link" onClick={closeMenu}>Comprobantes</Link>
-        <Link to="/reporte_afip" className="navbar-link" onClick={closeMenu}>Reporte AFIP</Link>
+        <Link to="/app/gestor_emisores" className="navbar-link" onClick={closeMenu}>Emisores</Link>
+        <Link to="/app/gestor_cuenta_corriente" className="navbar-link" onClick={closeMenu}>Cuenta Corriente</Link>
+        <Link to="/app/gestor_zetas" className="navbar-link" onClick={closeMenu}>Zetas</Link>
+        <Link to="/app/gestor_comprobantes" className="navbar-link" onClick={closeMenu}>Comprobantes</Link>
+        <Link to="/app/reporte_afip" className="navbar-link" onClick={closeMenu}>Reporte AFIP</Link>
+        {farmacia && (
+          <button
+            className="navbar-link"
+            onClick={handleCambiarFarmacia}
+            style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#888', fontSize: 'inherit' }}
+          >
+            {farmacia.nombre} ✕
+          </button>
+        )}
       </div>
     </nav>
   );

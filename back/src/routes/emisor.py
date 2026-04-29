@@ -8,35 +8,41 @@ from db import get_db
 emisor = APIRouter(tags=["Emisor"])
 
 
+def get_repo(farmacia_id: int, db: Session = Depends(get_db)):
+    return repo.EmisorRepo(db, farmacia_id)
+
+
 @emisor.get("/emisores", response_model=List[schemas.Emisor])
-def get_emisores(db: Session = Depends(get_db)):
-    return repo.EmisorRepo(db).get_emisores()
+def get_emisores(r: repo.EmisorRepo = Depends(get_repo)):
+    return r.get_emisores()
 
 
 @emisor.post("/emisor", response_model=schemas.Emisor, status_code=201)
-def create_emisor(emisor: schemas.EmisorCreate, db: Session = Depends(get_db)):
-    return repo.EmisorRepo(db).create_emisor(emisor)
+def create_emisor(emisor: schemas.EmisorCreate, r: repo.EmisorRepo = Depends(get_repo)):
+    return r.create_emisor(emisor)
 
 
 @emisor.delete("/emisor/{cuit}", response_model=schemas.Emisor)
-def delete_emisor(cuit: int, db: Session = Depends(get_db)):
-    return repo.EmisorRepo(db).delete_emisor(cuit)
+def delete_emisor(cuit: int, r: repo.EmisorRepo = Depends(get_repo)):
+    return r.delete_emisor(cuit)
 
 
 @emisor.get("/emisor/{cuit}", response_model=schemas.Emisor)
-def existe_emisor(cuit: int, db: Session = Depends(get_db)):
-    return repo.EmisorRepo(db).get_emisor(cuit)
+def existe_emisor(cuit: int, r: repo.EmisorRepo = Depends(get_repo)):
+    return r.get_emisor(cuit)
+
 
 @emisor.put("/emisor/{cuit}", response_model=schemas.Emisor)
-def update_emisor(cuit: int, emisor: schemas.EmisorCreate, db: Session = Depends(get_db)):
-    db_emisor = repo.EmisorRepo(db).get_emisor(cuit)
+def update_emisor(cuit: int, emisor: schemas.EmisorCreate, r: repo.EmisorRepo = Depends(get_repo)):
+    db_emisor = r.get_emisor(cuit)
     if not db_emisor:
         raise HTTPException(status_code=404, detail="Emisor not found")
-    return repo.EmisorRepo(db).update_emisor(cuit, emisor)
+    return r.update_emisor(cuit, emisor)
+
 
 @emisor.put("/emisor/{cuit}/cuenta_corriente", response_model=schemas.Emisor)
-def set_cuenta_corriente(cuit: int, cuenta_corriente: bool, db: Session = Depends(get_db)):
-    db_emisor = repo.EmisorRepo(db).get_emisor(cuit)
+def set_cuenta_corriente(cuit: int, cuenta_corriente: bool, r: repo.EmisorRepo = Depends(get_repo)):
+    db_emisor = r.get_emisor(cuit)
     if not db_emisor:
         raise HTTPException(status_code=404, detail="Emisor not found")
-    return repo.EmisorRepo(db).set_cuenta_corriente(cuit, cuenta_corriente)
+    return r.set_cuenta_corriente(cuit, cuenta_corriente)

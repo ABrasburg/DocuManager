@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, DateTime, Float
+from sqlalchemy import Column, Integer, DateTime, Float, ForeignKey
 from db import Base
 
 
@@ -17,3 +17,4 @@ class Zeta(Base):
     perfumeria = Column(Float, nullable=False)
     medicamentos_iva = Column(Float, nullable=False)
     total = Column(Float, nullable=False)
+    farmacia_id = Column(Integer, ForeignKey("farmacia.id"), nullable=False)
