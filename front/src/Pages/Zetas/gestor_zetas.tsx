@@ -243,7 +243,7 @@ const GestorZetas: React.FC = () => {
             </Button>
             </div>
             <Spin spinning={loading} tip="Cargando Zetas...">
-            <Table<Zeta> columns={columns} dataSource={zetas} size="middle" />
+            <Table<Zeta> columns={columns} dataSource={zetas} size="middle" pagination={{ showSizeChanger: true, pageSizeOptions: ['10', '20', '50', '100'] }} />
             </Spin>
             <ModificarZeta
             open={mostrarUtilizarZeta}

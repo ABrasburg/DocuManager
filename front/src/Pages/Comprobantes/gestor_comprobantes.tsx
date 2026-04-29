@@ -342,7 +342,7 @@ const GestorComprobantes: React.FC = () => {
         </div>
       </div>
       <Spin spinning={loadingComprobantes} tip="Cargando comprobantes...">
-          <Table<Comprobante> columns={columns} dataSource={comprobantes} size="middle" />
+          <Table<Comprobante> columns={columns} dataSource={comprobantes} size="middle" pagination={{ showSizeChanger: true, pageSizeOptions: ['10', '20', '50', '100'] }} />
       </Spin>
       <ExitoPopup
         open={mostrarPopupExito}
