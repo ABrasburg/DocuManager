@@ -18,6 +18,8 @@ cd "$REPO_DIR/front"
 npm install --silent
 NODE_OPTIONS=--openssl-legacy-provider npm run build
 
+chmod o+x "$REPO_DIR/front/build" 2>/dev/null || true
+
 echo "[update] Reiniciando backend..."
 sudo systemctl restart documanager-backend
 

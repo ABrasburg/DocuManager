@@ -33,6 +33,9 @@ cd "$REPO_DIR/front"
 npm install --silent
 NODE_OPTIONS=--openssl-legacy-provider npm run build
 
+# --- Permisos para nginx ---
+chmod o+x "$HOME" "$HOME/Desktop" "$REPO_DIR" "$REPO_DIR/front" "$REPO_DIR/front/build" 2>/dev/null || true
+
 # --- Nginx ---
 echo "[4/6] Configurando nginx..."
 sed "s|/REPO_DIR|$REPO_DIR|g" "$REPO_DIR/nginx.conf" | sudo tee /etc/nginx/sites-available/documanager > /dev/null
