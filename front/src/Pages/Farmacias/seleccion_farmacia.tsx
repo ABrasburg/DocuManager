@@ -3,7 +3,7 @@ import { Button, Input, Spin, Typography } from 'antd';
 import { PlusOutlined } from '@ant-design/icons';
 import { useFarmacia } from '../../context/FarmaciaContext';
 import { useNavigate } from 'react-router-dom';
-import axios from 'axios';
+import api from '../../api';
 
 const { Title } = Typography;
 
@@ -11,8 +11,6 @@ interface Farmacia {
   id: number;
   nombre: string;
 }
-
-const BASE_URL = `http://${window.location.hostname}:9000`;
 
 const SeleccionFarmacia: React.FC = () => {
   const { setFarmacia } = useFarmacia();
@@ -24,7 +22,7 @@ const SeleccionFarmacia: React.FC = () => {
   const [error, setError] = useState('');
 
   useEffect(() => {
-    axios.get(`${BASE_URL}/farmacias`)
+    api.get('/farmacias')
       .then((res) => setFarmacias(res.data))
       .catch(() => setError('No se pudo conectar al servidor.'))
       .finally(() => setLoading(false));
@@ -35,7 +33,7 @@ const SeleccionFarmacia: React.FC = () => {
     if (!nombre) return;
     setCreando(true);
     try {
-      const res = await axios.post(`${BASE_URL}/farmacia`, { nombre });
+      const res = await api.post('/farmacia', { nombre });
       const nueva = res.data;
       setFarmacias((prev) => [...prev, nueva]);
       setNombreNueva('');
