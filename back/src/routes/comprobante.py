@@ -121,8 +121,15 @@ def get_comprobantes_sumar(
         raise HTTPException(status_code=404, detail="Emisor no encontrado")
     comprobantes = r.get_comprobantes_by_emisor(emisor.id)
 
-    fecha_inicio_dt = datetime.strptime(fecha_inicio, "%d/%m/%Y")
-    fecha_fin_dt = datetime.strptime(fecha_fin, "%d/%m/%Y")
+    for fmt in ("%d/%m/%Y", "%Y-%m-%d"):
+        try:
+            fecha_inicio_dt = datetime.strptime(fecha_inicio, fmt)
+            fecha_fin_dt = datetime.strptime(fecha_fin, fmt)
+            break
+        except ValueError:
+            continue
+    else:
+        raise HTTPException(status_code=400, detail="Formato de fecha inválido")
 
     exento = otros_tributos = iva = total = 0
     for c in comprobantes:
