@@ -21,7 +21,7 @@ NODE_OPTIONS=--openssl-legacy-provider npm run build
 chmod -R o+rX "$REPO_DIR/front/build" 2>/dev/null || true
 
 echo "[update] Reiniciando backend..."
-sudo systemctl restart documanager-backend
+pkill -f "python main.py" || true
 
 echo "[update] Recargando nginx..."
 sudo systemctl reload nginx
