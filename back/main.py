@@ -75,6 +75,47 @@ async def github_webhook(request: Request):
     return {"status": "update started"}
 
 
+def _get_secret() -> bytes:
+    secret_file = os.path.join(os.path.dirname(__file__), "..", ".webhook_secret")
+    with open(secret_file) as f:
+        return f.read().strip().encode()
+
+
+def _check_secret(request: Request):
+    try:
+        secret = _get_secret()
+    except FileNotFoundError:
+        raise HTTPException(status_code=500, detail="Secret not configured")
+    token = request.headers.get("X-Admin-Token", "")
+    if not hmac.compare_digest(token.encode(), secret):
+        raise HTTPException(status_code=401, detail="Unauthorized")
+
+
+@app.get("/admin/logs")
+def get_logs(request: Request, lines: int = 50):
+    _check_secret(request)
+    result = subprocess.run(
+        ["journalctl", "-u", "documanager-backend", "-n", str(lines), "--no-pager", "--output=short"],
+        capture_output=True, text=True
+    )
+    return {"logs": result.stdout}
+
+
+@app.post("/admin/restart")
+def restart_backend(request: Request):
+    _check_secret(request)
+    subprocess.Popen(["sudo", "systemctl", "restart", "documanager-backend"], start_new_session=True)
+    return {"status": "restarting"}
+
+
+@app.post("/admin/update")
+def force_update(request: Request):
+    _check_secret(request)
+    update_script = os.path.join(os.path.dirname(__file__), "..", "update.sh")
+    subprocess.Popen(["bash", update_script], start_new_session=True)
+    return {"status": "update started"}
+
+
 @app.exception_handler(Exception)
 def handle_exception(request, exc):
     base_error_message = f"Failed to execute: {request.method}: {request.url}"
