@@ -494,7 +494,7 @@ async def generar_reporte_afip(
     ventas_medicamentos_iva = sum(z.medicamentos_iva or 0 for z in zetas)
     ventas_iva = sum(z.iva or 0 for z in zetas)
     ventas_total = sum(z.total or 0 for z in zetas)
-    ventas_gravado_total = ventas_perfumeria + ventas_medicamentos_iva
+    ventas_gravado = ventas_iva / 1.21 if ventas_iva else 0
 
     return {
         "periodo": {"fecha_inicio": fecha_inicio, "fecha_fin": fecha_fin, "cantidad_dias": cantidad_dias},
@@ -506,6 +506,7 @@ async def generar_reporte_afip(
         },
         "ventas": {
             "exento": round(ventas_exento, 2),
+            "gravado": round(ventas_gravado, 2),
             "perfumeria": round(ventas_perfumeria, 2),
             "medicamentos_iva": round(ventas_medicamentos_iva, 2),
             "iva": round(ventas_iva, 2),
@@ -513,7 +514,7 @@ async def generar_reporte_afip(
         },
         "diferencia": {
             "cantidad_dias": cantidad_dias,
-            "gravado": round(ventas_gravado_total - compras_gravado, 2),
+            "gravado": round(ventas_gravado - compras_gravado, 2),
             "total": round(ventas_total - compras_subtotal, 2),
         },
     }
