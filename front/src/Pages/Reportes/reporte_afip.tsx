@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { DatePicker, Button, Card, Space, Typography, Spin, message } from 'antd';
+import { DatePicker, Button, Card, Space, Typography, Row, Col, Spin, message } from 'antd';
 import { SearchOutlined } from '@ant-design/icons';
 import dayjs from 'dayjs';
 import api from '../../api';
@@ -16,12 +16,22 @@ interface ReporteData {
     fecha_fin: string;
     cantidad_dias: number;
   };
-  exento: number;
-  gravado: number;
-  perfumeria: number;
-  medicamentos_iva: number;
-  iva: number;
-  total: number;
+  compras: {
+    subtotal_exento: number;
+    subtotal_gravado: number;
+    iva: number;
+    subtotal: number;
+  };
+  ventas: {
+    exento: number;
+    gravado: number;
+    total: number;
+  };
+  diferencia: {
+    cantidad_dias: number;
+    gravado: number;
+    total: number;
+  };
 }
 
 const ReporteAFIP: React.FC = () => {
@@ -107,46 +117,103 @@ const ReporteAFIP: React.FC = () => {
         {reporteData && !loading && (
           <Card>
             <div style={{ border: '2px solid #d4a574', borderRadius: '8px', padding: '20px', backgroundColor: '#faf8f5' }}>
-
+              
               <div style={{ textAlign: 'center', marginBottom: '20px' }}>
                 <Title level={4} style={{ margin: 0, color: '#8b5a2b' }}>
                   Informe general de comprobantes
                 </Title>
                 <Text>
-                  Desde: {dayjs(reporteData.periodo.fecha_inicio).format('DD/MM/YYYY')}
+                  Desde: {dayjs(reporteData.periodo.fecha_inicio).format('DD/MM/YYYY')} 
                   {' - '}
                   Hasta: {dayjs(reporteData.periodo.fecha_fin).format('DD/MM/YYYY')}
-                  {' · '}
-                  {reporteData.periodo.cantidad_dias} días
                 </Text>
               </div>
 
-              <div style={{ backgroundColor: '#fff', padding: '15px', borderRadius: '6px', border: '1px solid #d9d9d9' }}>
-                <div style={{ marginBottom: '8px', display: 'flex', justifyContent: 'space-between' }}>
-                  <Text>Exento:</Text>
-                  <Text strong>{formatNumber(reporteData.exento)}</Text>
-                </div>
-                <div style={{ marginBottom: '8px', display: 'flex', justifyContent: 'space-between' }}>
-                  <Text>Gravado:</Text>
-                  <Text strong>{formatNumber(reporteData.gravado)}</Text>
-                </div>
-                <div style={{ marginBottom: '8px', display: 'flex', justifyContent: 'space-between' }}>
-                  <Text>Perfumería:</Text>
-                  <Text strong>{formatNumber(reporteData.perfumeria)}</Text>
-                </div>
-                <div style={{ marginBottom: '8px', display: 'flex', justifyContent: 'space-between' }}>
-                  <Text>Medicamentos IVA:</Text>
-                  <Text strong>{formatNumber(reporteData.medicamentos_iva)}</Text>
-                </div>
-                <div style={{ marginBottom: '8px', display: 'flex', justifyContent: 'space-between' }}>
-                  <Text>IVA:</Text>
-                  <Text strong>{formatNumber(reporteData.iva)}</Text>
-                </div>
-                <div style={{ borderTop: '1px solid #d9d9d9', paddingTop: '10px', marginTop: '10px', display: 'flex', justifyContent: 'space-between' }}>
-                  <Text strong style={{ fontSize: '16px' }}>Total:</Text>
-                  <Text strong style={{ fontSize: '16px' }}>{formatNumber(reporteData.total)}</Text>
-                </div>
-              </div>
+              <Row gutter={[16, 16]}>
+                <Col xs={24} md={11}>
+                  <div style={{ backgroundColor: '#fff', padding: '15px', borderRadius: '6px', border: '1px solid #d9d9d9' }}>
+                    <Title level={5} style={{ margin: '0 0 15px 0', color: '#8b4513' }}>COMPRAS</Title>
+                    
+                    <div style={{ marginBottom: '8px' }}>
+                      <Text>Subtotal Exento:</Text>
+                      <Text strong style={{ float: 'right' }}>{formatNumber(reporteData.compras.subtotal_exento)}</Text>
+                    </div>
+                    
+                    <div style={{ marginBottom: '8px' }}>
+                      <Text>Subtotal Gravado:</Text>
+                      <Text strong style={{ float: 'right' }}>{formatNumber(reporteData.compras.subtotal_gravado)}</Text>
+                    </div>
+                    
+                    <div style={{ marginBottom: '8px' }}>
+                      <Text>IVA:</Text>
+                      <Text strong style={{ float: 'right' }}>{formatNumber(reporteData.compras.iva)}</Text>
+                    </div>
+                    
+                    <div style={{ borderTop: '1px solid #d9d9d9', paddingTop: '8px', marginTop: '8px' }}>
+                      <Text strong>Subtotal:</Text>
+                      <Text strong style={{ float: 'right', fontSize: '16px' }}>{formatNumber(reporteData.compras.subtotal)}</Text>
+                    </div>
+                  </div>
+                </Col>
+
+                <Col xs={24} md={11} offset={1}>
+                  <div style={{ backgroundColor: '#fff', padding: '15px', borderRadius: '6px', border: '1px solid #d9d9d9' }}>
+                    <Title level={5} style={{ margin: '0 0 15px 0', color: '#6b5b47' }}>VENTAS</Title>
+                    
+                    <div style={{ marginBottom: '8px' }}>
+                      <Text>Exento:</Text>
+                      <Text strong style={{ float: 'right' }}>{formatNumber(reporteData.ventas.exento)}</Text>
+                    </div>
+                    
+                    <div style={{ marginBottom: '8px' }}>
+                      <Text>Gravado:</Text>
+                      <Text strong style={{ float: 'right' }}>{formatNumber(reporteData.ventas.gravado)}</Text>
+                    </div>
+                    
+                    <div style={{ borderTop: '1px solid #d9d9d9', paddingTop: '8px', marginTop: '15px' }}>
+                      <Text strong>Total:</Text>
+                      <Text strong style={{ float: 'right', fontSize: '16px' }}>{formatNumber(reporteData.ventas.total)}</Text>
+                    </div>
+                  </div>
+                </Col>
+              </Row>
+
+              <Row style={{ marginTop: '20px' }}>
+                <Col span={24}>
+                  <div style={{ backgroundColor: '#f8f5f0', padding: '15px', borderRadius: '6px', border: '1px solid #c69c6d' }}>
+                    <Title level={5} style={{ margin: '0 0 15px 0', color: '#8b5a2b' }}>DIFERENCIA</Title>
+                    
+                    <Row>
+                      <Col span={12}>
+                        <div style={{ marginBottom: '8px' }}>
+                          <Text>Cantidad de días:</Text>
+                          <Text strong style={{ marginLeft: '10px' }}>{reporteData.diferencia.cantidad_dias}</Text>
+                        </div>
+                        
+                        <div style={{ marginBottom: '8px' }}>
+                          <Text>Gravado:</Text>
+                          <Text strong style={{ marginLeft: '10px', color: reporteData.diferencia.gravado >= 0 ? '#52c41a' : '#f5222d' }}>
+                            {formatNumber(reporteData.diferencia.gravado)}
+                          </Text>
+                        </div>
+                      </Col>
+                      
+                      <Col span={12}>
+                        <div style={{ textAlign: 'right' }}>
+                          <Text strong style={{ fontSize: '18px' }}>Total:</Text>
+                          <Text strong style={{ 
+                            marginLeft: '10px', 
+                            fontSize: '18px',
+                            color: reporteData.diferencia.total >= 0 ? '#52c41a' : '#f5222d'
+                          }}>
+                            {formatNumber(reporteData.diferencia.total)}
+                          </Text>
+                        </div>
+                      </Col>
+                    </Row>
+                  </div>
+                </Col>
+              </Row>
 
             </div>
           </Card>
