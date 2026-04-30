@@ -19,7 +19,6 @@ interface ReporteData {
   compras: {
     subtotal_exento: number;
     subtotal_gravado: number;
-    iva: number;
     subtotal: number;
   };
   ventas: {
@@ -142,11 +141,6 @@ const ReporteAFIP: React.FC = () => {
                     <div style={{ marginBottom: '8px' }}>
                       <Text>Subtotal Gravado:</Text>
                       <Text strong style={{ float: 'right' }}>{formatNumber(reporteData.compras.subtotal_gravado)}</Text>
-                    </div>
-                    
-                    <div style={{ marginBottom: '8px' }}>
-                      <Text>IVA:</Text>
-                      <Text strong style={{ float: 'right' }}>{formatNumber(reporteData.compras.iva)}</Text>
                     </div>
                     
                     <div style={{ borderTop: '1px solid #d9d9d9', paddingTop: '8px', marginTop: '8px' }}>

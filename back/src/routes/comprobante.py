@@ -484,9 +484,8 @@ async def generar_reporte_afip(
 
     comprobantes = r.get_comprobantes_by_fechas(fi_fmt, ff_fmt)
     compras_exento = sum((c.exento or 0) + (c.neto_no_gravado or 0) for c in comprobantes)
-    compras_iva = sum(c.iva or 0 for c in comprobantes)
-    compras_gravado = compras_iva / 1.21
-    compras_subtotal = compras_exento + compras_gravado + compras_iva
+    compras_gravado = sum(c.neto_gravado or 0 for c in comprobantes)
+    compras_subtotal = compras_exento + compras_gravado
 
     zetas = zeta_r.get_zetas_by_fecha(fi_fmt, ff_fmt)
     ventas_exento = sum(z.exento or 0 for z in zetas)
@@ -501,7 +500,6 @@ async def generar_reporte_afip(
         "compras": {
             "subtotal_exento": round(compras_exento, 2),
             "subtotal_gravado": round(compras_gravado, 2),
-            "iva": round(compras_iva, 2),
             "subtotal": round(compras_subtotal, 2),
         },
         "ventas": {
