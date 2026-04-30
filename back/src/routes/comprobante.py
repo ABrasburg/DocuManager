@@ -478,38 +478,20 @@ async def generar_reporte_afip(
     except ValueError:
         raise HTTPException(status_code=400, detail="Formato de fecha inválido. Use YYYY-MM-DD")
 
-    comprobantes = r.get_comprobantes_by_fechas(fi_fmt, ff_fmt)
-    compras_exento = sum((c.exento or 0) + (c.neto_no_gravado or 0) for c in comprobantes)
-    compras_iva = sum(c.iva or 0 for c in comprobantes)
-    compras_gravado = compras_iva / 1.21
-    compras_subtotal = compras_exento + compras_gravado + compras_iva
-
     zetas = zeta_r.get_zetas_by_fecha(fi_fmt, ff_fmt)
-    ventas_exento = sum(z.exento or 0 for z in zetas)
-    ventas_perfumeria = sum(z.perfumeria or 0 for z in zetas)
-    ventas_medicamentos_iva = sum(z.medicamentos_iva or 0 for z in zetas)
-    ventas_iva = sum(z.iva or 0 for z in zetas)
-    ventas_total = sum(z.total or 0 for z in zetas)
-    ventas_gravado_total = ventas_perfumeria + ventas_medicamentos_iva
+    exento = sum(z.exento or 0 for z in zetas)
+    perfumeria = sum(z.perfumeria or 0 for z in zetas)
+    medicamentos_iva = sum(z.medicamentos_iva or 0 for z in zetas)
+    iva = sum(z.iva or 0 for z in zetas)
+    total = sum(z.total or 0 for z in zetas)
+    gravado = iva / 1.21 if iva else 0
 
     return {
         "periodo": {"fecha_inicio": fecha_inicio, "fecha_fin": fecha_fin, "cantidad_dias": cantidad_dias},
-        "compras": {
-            "subtotal_exento": round(compras_exento, 2),
-            "subtotal_gravado": round(compras_gravado, 2),
-            "iva": round(compras_iva, 2),
-            "subtotal": round(compras_subtotal, 2),
-        },
-        "ventas": {
-            "exento": round(ventas_exento, 2),
-            "perfumeria": round(ventas_perfumeria, 2),
-            "medicamentos_iva": round(ventas_medicamentos_iva, 2),
-            "iva": round(ventas_iva, 2),
-            "total": round(ventas_total, 2),
-        },
-        "diferencia": {
-            "cantidad_dias": cantidad_dias,
-            "gravado": round(ventas_gravado_total - compras_gravado, 2),
-            "total": round(ventas_total - compras_subtotal, 2),
-        },
+        "exento": round(exento, 2),
+        "gravado": round(gravado, 2),
+        "perfumeria": round(perfumeria, 2),
+        "medicamentos_iva": round(medicamentos_iva, 2),
+        "iva": round(iva, 2),
+        "total": round(total, 2),
     }
