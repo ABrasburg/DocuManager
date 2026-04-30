@@ -23,4 +23,7 @@ chmod -R o+rX "$REPO_DIR/front/build" 2>/dev/null || true
 echo "[update] Reiniciando backend..."
 sudo systemctl restart documanager-backend
 
+echo "[update] Recargando nginx..."
+sudo systemctl reload nginx
+
 echo "[update] Listo."
