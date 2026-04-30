@@ -23,9 +23,13 @@ class ZetaRepo:
         return self.db.query(Zeta).filter(Zeta.farmacia_id == self.farmacia_id).all()
 
     def get_zetas_by_fecha(self, fecha_desde: str, fecha_hasta: str):
+        from datetime import datetime
+        fi = datetime.strptime(fecha_desde, "%d/%m/%Y")
+        ff = datetime.strptime(fecha_hasta, "%d/%m/%Y").replace(hour=23, minute=59, second=59)
         return self.db.query(Zeta).filter(
             Zeta.farmacia_id == self.farmacia_id,
-            Zeta.fecha.between(fecha_desde, fecha_hasta)
+            Zeta.fecha >= fi,
+            Zeta.fecha <= ff,
         ).all()
 
     def update_zeta(self, id: int, zeta: ZetaCreate):

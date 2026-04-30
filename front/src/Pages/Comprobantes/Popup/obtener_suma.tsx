@@ -7,8 +7,7 @@ interface Suma {
     cuit: number;
     fecha_inicio: string;
     fecha_fin: string;
-    neto_gravado: number;
-    neto_no_gravado: number;
+    gravado: number;
     exento: number;
     otros_tributos: number;
     iva: number;
@@ -125,8 +124,7 @@ const SumaPopup: React.FC<Props> = ({ open, onClose }) => {
                                     <p><strong>Cuit:</strong> {suma.cuit}</p>
                                     <p><strong>Fecha Inicio:</strong> {suma.fecha_inicio}</p>
                                     <p><strong>Fecha Fin:</strong> {suma.fecha_fin}</p>
-                                    <p><strong>Neto Gravado:</strong> {formatCurrency(suma.neto_gravado)}</p>
-                                    <p><strong>Neto No Gravado:</strong> {formatCurrency(suma.neto_no_gravado)}</p>
+                                    <p><strong>Gravado:</strong> {formatCurrency(suma.gravado)}</p>
                                     <p><strong>Exento:</strong> {formatCurrency(suma.exento)}</p>
                                     <p><strong>Otros Tributos:</strong> {formatCurrency(suma.otros_tributos)}</p>
                                     <p><strong>IVA:</strong> {formatCurrency(suma.iva)}</p>

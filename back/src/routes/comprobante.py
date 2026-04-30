@@ -124,7 +124,7 @@ def get_comprobantes_sumar(
     fecha_inicio_dt = datetime.strptime(fecha_inicio, "%d/%m/%Y")
     fecha_fin_dt = datetime.strptime(fecha_fin, "%d/%m/%Y")
 
-    neto_gravado = neto_no_gravado = exento = otros_tributos = iva = total = 0
+    exento = otros_tributos = iva = total = 0
     for c in comprobantes:
         try:
             try:
@@ -132,25 +132,24 @@ def get_comprobantes_sumar(
             except ValueError:
                 fecha_c = datetime.strptime(c.fecha_emision, "%d/%m/%Y")
             if fecha_inicio_dt <= fecha_c <= fecha_fin_dt:
-                neto_gravado += c.neto_gravado or 0
-                neto_no_gravado += c.neto_no_gravado or 0
-                exento += c.exento or 0
+                exento += (c.exento or 0) + (c.neto_no_gravado or 0)
                 otros_tributos += c.otros_tributos or 0
                 iva += c.iva or 0
                 total += c.total or 0
         except Exception:
             continue
 
+    gravado = iva / 1.21 if iva else 0
+
     return {
         "cuit": cuit,
         "fecha_inicio": fecha_inicio,
         "fecha_fin": fecha_fin,
-        "neto_gravado": neto_gravado,
-        "neto_no_gravado": neto_no_gravado,
-        "exento": exento,
-        "otros_tributos": otros_tributos,
-        "iva": iva,
-        "total": total,
+        "gravado": round(gravado, 2),
+        "exento": round(exento, 2),
+        "otros_tributos": round(otros_tributos, 2),
+        "iva": round(iva, 2),
+        "total": round(total, 2),
     }
 
 
@@ -480,9 +479,9 @@ async def generar_reporte_afip(
         raise HTTPException(status_code=400, detail="Formato de fecha inválido. Use YYYY-MM-DD")
 
     comprobantes = r.get_comprobantes_by_fechas(fi_fmt, ff_fmt)
-    compras_exento = sum(c.exento or 0 for c in comprobantes)
-    compras_gravado = sum(c.neto_gravado or 0 for c in comprobantes)
+    compras_exento = sum((c.exento or 0) + (c.neto_no_gravado or 0) for c in comprobantes)
     compras_iva = sum(c.iva or 0 for c in comprobantes)
+    compras_gravado = compras_iva / 1.21
     compras_subtotal = compras_exento + compras_gravado + compras_iva
 
     zetas = zeta_r.get_zetas_by_fecha(fi_fmt, ff_fmt)
