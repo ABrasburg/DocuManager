@@ -24,8 +24,8 @@ class ZetaRepo:
 
     def get_zetas_by_fecha(self, fecha_desde: str, fecha_hasta: str):
         from datetime import datetime
-        fi = datetime.strptime(fecha_desde, "%d/%m/%Y")
-        ff = datetime.strptime(fecha_hasta, "%d/%m/%Y").replace(hour=23, minute=59, second=59)
+        fi = datetime.strptime(fecha_desde, "%Y-%m-%d")
+        ff = datetime.strptime(fecha_hasta, "%Y-%m-%d").replace(hour=23, minute=59, second=59)
         return self.db.query(Zeta).filter(
             Zeta.farmacia_id == self.farmacia_id,
             Zeta.fecha >= fi,
