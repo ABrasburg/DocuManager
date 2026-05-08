@@ -68,7 +68,7 @@ const ReporteAFIP: React.FC = () => {
       setReporteData(response.data);
     } catch (error: any) {
       console.error('Error al generar reporte:', error);
-      setTextoError(error.response?.data?.detail || 'Error al generar el reporte');
+      setTextoError(error.response?.data?.detail || error.response?.data?.message || 'Error al generar el reporte');
       setShowErrorPopup(true);
     }
     setLoading(false);

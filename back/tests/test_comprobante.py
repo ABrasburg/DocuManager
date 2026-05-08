@@ -1,92 +1,116 @@
-from fastapi.testclient import TestClient
-import os
-import sys
-
-sys.path.append(os.getcwd())
-from main import app
-
-from db import Base, engine, SessionLocal
-from dotenv import load_dotenv
-from aux_tests import setup_module
-
-load_dotenv()
-Base.metadata.create_all(bind=engine)
-
-client = TestClient(app)
-
-setup_module()
-
-def test_get_comprobantes():
-    response = client.get("/comprobantes")
+def test_comprobante_crud_y_consultas(
+    client,
+    farmacia_params,
+    tipo_comprobante,
+    comprobante_payload,
+    emisor_payload,
+):
+    response = client.get("/comprobantes", params=farmacia_params)
     assert response.status_code == 200
     assert response.json() == []
 
-test_emisor = {
-        "cuit": 20123456789,
-        "tipo_doc": "CUIT",
-        "denominacion": "Test Emisor"
-    }
-    
-test_tipo = {
-        "tipo_comprobante": 1,
-        "nombre": "Factura"
-    }
-    
-test_comprobante = {
-        "fecha_emision": "2023-01-01",
-        "punto_venta": 1,
-        "numero_desde": 1,
-        "numero_hasta": 1,
-        "cod_autorizacion": 12323,
-        "tipo_cambio": 1.0,
-        "moneda": "ARS",
-        "neto_gravado": 1000.0,
-        "neto_no_gravado": 0.0,
-        "exento": 0.0,
-        "otros_tributos": 0.0,
-        "iva": 210.0,
-        "total": 1210.0,
-        "emisor": test_emisor,
-        "tipo_comprobante": test_tipo
-    }
-
-def test_create_comprobante():
-    response = client.post("/comprobante", json=test_comprobante)
-    print(response.json())
+    response = client.post("/comprobante", params=farmacia_params, json=comprobante_payload)
     assert response.status_code == 201
-    assert response.json()["fecha_emision"] == "2023-01-01"
+    created = response.json()
+    assert created["fecha_emision"] == "2026-04-01"
+    assert created["emisor"]["cuit"] == emisor_payload["cuit"]
+    assert created["tipo_comprobante"]["tipo_comprobante"] == 1
 
-def test_get_comprobantes_con_nuevo_tipo():
-    nuevo_tipo = {
-        "tipo_comprobante": 99,
-        "nombre": "Nuevo tipo"
-    }
-    test_comprobante["tipo_comprobante"] = nuevo_tipo
-    response = client.post("/comprobante", json=test_comprobante)
-    assert response.status_code == 404
+    response = client.get(f"/comprobante/{created['id']}", params=farmacia_params)
+    assert response.status_code == 200
+    assert response.json()["id"] == created["id"]
 
-def test_get_suma_comprobantes():
-    json_data = {
-        "fecha_inicio": "2023-01-01",
-        "fecha_fin": "2023-12-31",
-        "cuit": 20123456789,
-    }
-    response = client.get("/comprobantes/sumar", params=json_data)
-    print(response.json())
+    response = client.get(
+        f"/comprobantes/emisor/{emisor_payload['cuit']}",
+        params=farmacia_params,
+    )
+    assert response.status_code == 200
+    assert [c["id"] for c in response.json()] == [created["id"]]
+
+    response = client.get(
+        "/comprobantes/fechas",
+        params={**farmacia_params, "fecha_inicio": "01/04/2026", "fecha_fin": "30/04/2026"},
+    )
+    assert response.status_code == 200
+    assert [c["id"] for c in response.json()] == [created["id"]]
+
+    response = client.get(
+        "/comprobantes/sumar",
+        params={
+            **farmacia_params,
+            "cuit": emisor_payload["cuit"],
+            "fecha_inicio": "2026-04-01",
+            "fecha_fin": "2026-04-30",
+        },
+    )
     assert response.status_code == 200
     assert response.json() == {
-        "cuit": 20123456789,
-        "fecha_inicio": "2023-01-01",
-        "fecha_fin": "2023-12-31",
-        "neto_gravado": 1000.0,
-        "neto_no_gravado": 0.0,
-        "exento": 0.0,
-        "otros_tributos": 0.0,
-        "iva": 210.0,
-        "total": 1210.0
+        "cuit": emisor_payload["cuit"],
+        "fecha_inicio": "2026-04-01",
+        "fecha_fin": "2026-04-30",
+        "gravado": 100.0,
+        "exento": 15.0,
+        "otros_tributos": 2.0,
+        "iva": 121.0,
+        "total": 238.0,
     }
 
-def test_borrar_comprobante():
-    response = client.delete("/comprobante/1")
+    response = client.delete(f"/comprobante/{created['id']}", params=farmacia_params)
     assert response.status_code == 200
-    assert response.json()["fecha_emision"] == "2023-01-01"
+    assert response.json()["id"] == created["id"]
+
+
+def test_comprobante_rechaza_tipo_inexistente(client, farmacia_params, comprobante_payload):
+    response = client.post("/comprobante", params=farmacia_params, json=comprobante_payload)
+    assert response.status_code == 404
+    assert response.json()["detail"] == "Tipo de comprobante no encontrado"
+
+
+def test_comprobante_download_csv(client, farmacia_params, comprobante):
+    response = client.get(
+        "/comprobantes/download",
+        params={
+            **farmacia_params,
+            "fecha_inicio": "2026-04-01",
+            "fecha_fin": "2026-04-30",
+        },
+    )
+
+    assert response.status_code == 200
+    assert response.headers["content-type"].startswith("text/csv")
+    assert "comprobantes_2026-04-01_a_2026-04-30.csv" in response.headers["content-disposition"]
+    assert "Fecha de Emisión" in response.text
+    assert "Proveedor Test" in response.text
+
+
+def test_cuenta_corriente_y_marcar_pagado(client, farmacia_params, comprobante, emisor_payload):
+    response = client.put(
+        f"/emisor/{emisor_payload['cuit']}/cuenta_corriente",
+        params={**farmacia_params, "cuenta_corriente": True},
+    )
+    assert response.status_code == 200
+
+    response = client.get("/comprobantes/cuenta_corriente", params=farmacia_params)
+    assert response.status_code == 200
+    assert [c["id"] for c in response.json()] == [comprobante["id"]]
+
+    response = client.put(
+        f"/comprobante/{comprobante['id']}/marcar_pagado",
+        params=farmacia_params,
+        json={"fecha_pago": "2026-04-15", "numero_ticket": "T-123"},
+    )
+    assert response.status_code == 200
+    assert response.json()["fecha_pago"] == "2026-04-15"
+    assert response.json()["numero_ticket"] == "T-123"
+
+    response = client.get(
+        "/comprobantes/cuenta_corriente/download",
+        params={
+            **farmacia_params,
+            "fecha_inicio": "2026-04-01",
+            "fecha_fin": "2026-04-30",
+        },
+    )
+    assert response.status_code == 200
+    assert "Fecha Pago" in response.text
+    assert "T-123" in response.text

@@ -99,8 +99,15 @@ def get_comprobante(id: int, r: repo.ComprobanteRepo = Depends(get_repo)):
 
 
 @comprobante.get("/comprobantes/emisor/{cuit}", response_model=List[schemas.Comprobante])
-def get_comprobantes_by_emisor(cuit: int, r: repo.ComprobanteRepo = Depends(get_repo)):
-    return r.get_comprobantes_by_emisor(cuit)
+def get_comprobantes_by_emisor(
+    cuit: int,
+    r: repo.ComprobanteRepo = Depends(get_repo),
+    emisor_repo: EmisorRepo = Depends(get_emisor_repo),
+):
+    emisor = emisor_repo.get_emisor(cuit)
+    if not emisor:
+        raise HTTPException(status_code=404, detail="Emisor no encontrado")
+    return r.get_comprobantes_by_emisor(emisor.id)
 
 
 @comprobante.get("/comprobantes/fechas", response_model=List[schemas.Comprobante])
@@ -487,7 +494,7 @@ async def generar_reporte_afip(
     compras_gravado = sum(c.neto_gravado or 0 for c in comprobantes)
     compras_subtotal = compras_exento + compras_gravado
 
-    zetas = zeta_r.get_zetas_by_fecha(fi_fmt, ff_fmt)
+    zetas = zeta_r.get_zetas_by_fecha(fecha_inicio, fecha_fin)
     ventas_exento = sum(z.exento or 0 for z in zetas)
     ventas_perfumeria = sum(z.perfumeria or 0 for z in zetas)
     ventas_medicamentos_iva = sum(z.medicamentos_iva or 0 for z in zetas)

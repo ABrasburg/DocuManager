@@ -1,4 +1,5 @@
 from sqlalchemy.orm import Session
+from datetime import datetime
 
 from src.models.zeta import Zeta
 from src.schemas.zeta_schema import ZetaCreate
@@ -22,10 +23,17 @@ class ZetaRepo:
     def get_zetas(self):
         return self.db.query(Zeta).filter(Zeta.farmacia_id == self.farmacia_id).all()
 
+    def _parse_fecha(self, fecha: str):
+        for formato in ("%Y-%m-%d", "%d/%m/%Y"):
+            try:
+                return datetime.strptime(fecha, formato)
+            except ValueError:
+                continue
+        raise ValueError("Formato de fecha invalido. Use YYYY-MM-DD o DD/MM/YYYY")
+
     def get_zetas_by_fecha(self, fecha_desde: str, fecha_hasta: str):
-        from datetime import datetime
-        fi = datetime.strptime(fecha_desde, "%Y-%m-%d")
-        ff = datetime.strptime(fecha_hasta, "%Y-%m-%d").replace(hour=23, minute=59, second=59)
+        fi = self._parse_fecha(fecha_desde)
+        ff = self._parse_fecha(fecha_hasta).replace(hour=23, minute=59, second=59)
         return self.db.query(Zeta).filter(
             Zeta.farmacia_id == self.farmacia_id,
             Zeta.fecha >= fi,
