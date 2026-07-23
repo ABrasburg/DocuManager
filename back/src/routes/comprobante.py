@@ -143,10 +143,11 @@ def get_comprobantes_sumar(
             except ValueError:
                 fecha_c = datetime.strptime(c.fecha_emision, "%d/%m/%Y")
             if fecha_inicio_dt <= fecha_c <= fecha_fin_dt:
-                exento += (c.exento or 0) + (c.neto_no_gravado or 0)
-                otros_tributos += c.otros_tributos or 0
-                iva += c.iva or 0
-                total += c.total or 0
+                sign = -1 if (c.tipo_comprobante and c.tipo_comprobante.tipo_comprobante == 3) else 1
+                exento += sign * abs((c.exento or 0) + (c.neto_no_gravado or 0))
+                otros_tributos += sign * abs(c.otros_tributos or 0)
+                iva += sign * abs(c.iva or 0)
+                total += sign * abs(c.total or 0)
         except Exception:
             continue
 
@@ -490,8 +491,12 @@ async def generar_reporte_afip(
         raise HTTPException(status_code=400, detail="Formato de fecha inválido. Use YYYY-MM-DD")
 
     comprobantes = r.get_comprobantes_by_fechas(fi_fmt, ff_fmt)
-    compras_exento = sum((c.exento or 0) + (c.neto_no_gravado or 0) for c in comprobantes)
-    compras_gravado = sum(c.neto_gravado or 0 for c in comprobantes)
+    compras_exento = 0.0
+    compras_gravado = 0.0
+    for c in comprobantes:
+        sign = -1 if (c.tipo_comprobante and c.tipo_comprobante.tipo_comprobante == 3) else 1
+        compras_exento += sign * abs((c.exento or 0) + (c.neto_no_gravado or 0))
+        compras_gravado += sign * abs(c.neto_gravado or 0)
     compras_subtotal = compras_exento + compras_gravado
 
     zetas = zeta_r.get_zetas_by_fecha(fecha_inicio, fecha_fin)

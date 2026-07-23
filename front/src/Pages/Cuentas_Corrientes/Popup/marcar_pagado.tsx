@@ -41,7 +41,7 @@ const MarcarPagado: React.FC<MarcarPagadoProps> = ({
   // Calcular el total a pagar
   const totalAPagar = displayComprobantes.reduce((sum, comp) => {
     const signo = comp.tipo_comprobante?.nombre === "Nota de Crédito" ? -1 : 1;
-    return sum + (signo * (comp.total || 0));
+    return sum + (signo * Math.abs(comp.total || 0));
   }, 0);
 
   const handleSubmit = async (values: any) => {

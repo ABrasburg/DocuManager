@@ -60,6 +60,48 @@ def test_comprobante_crud_y_consultas(
     assert response.json()["id"] == created["id"]
 
 
+def test_sumar_descuenta_nota_credito(client, farmacia_params, emisor_payload):
+    client.post("/tipo_comprobante", params=farmacia_params, json={"tipo_comprobante": 1, "nombre": "Factura"})
+    client.post("/tipo_comprobante", params=farmacia_params, json={"tipo_comprobante": 3, "nombre": "Nota de Crédito"})
+
+    base = {
+        "fecha_emision": "2026-04-01",
+        "punto_venta": 1,
+        "cod_autorizacion": 0,
+        "tipo_cambio": 1.0,
+        "moneda": "ARS",
+        "neto_gravado": 0.0,
+        "neto_no_gravado": 0.0,
+        "otros_tributos": 0.0,
+        "emisor": emisor_payload,
+    }
+
+    # Factura: total=121, iva=21, exento=0
+    client.post("/comprobante", params=farmacia_params, json={
+        **base,
+        "numero_desde": 1, "numero_hasta": 1,
+        "exento": 0.0, "iva": 21.0, "total": 121.0,
+        "tipo_comprobante": {"tipo_comprobante": 1, "nombre": "Factura"},
+    })
+
+    # Nota de crédito ingresada manualmente con valores positivos
+    client.post("/comprobante", params=farmacia_params, json={
+        **base,
+        "numero_desde": 2, "numero_hasta": 2,
+        "exento": 0.0, "iva": 10.5, "total": 60.5,
+        "tipo_comprobante": {"tipo_comprobante": 3, "nombre": "Nota de Crédito"},
+    })
+
+    response = client.get(
+        "/comprobantes/sumar",
+        params={**farmacia_params, "cuit": emisor_payload["cuit"], "fecha_inicio": "2026-04-01", "fecha_fin": "2026-04-30"},
+    )
+    assert response.status_code == 200
+    data = response.json()
+    assert data["iva"] == round(21.0 - 10.5, 2)
+    assert data["total"] == round(121.0 - 60.5, 2)
+
+
 def test_comprobante_rechaza_tipo_inexistente(client, farmacia_params, comprobante_payload):
     response = client.post("/comprobante", params=farmacia_params, json=comprobante_payload)
     assert response.status_code == 404
