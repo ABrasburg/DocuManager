@@ -68,6 +68,21 @@ def delete_comprobante(id: int, r: repo.ComprobanteRepo = Depends(get_repo)):
     return r.delete_comprobante(id)
 
 
+@comprobante.delete("/comprobantes/por_fechas")
+def delete_comprobantes_por_fechas(
+    fecha_inicio: str,
+    fecha_fin: str,
+    r: repo.ComprobanteRepo = Depends(get_repo),
+):
+    try:
+        datetime.strptime(fecha_inicio, "%Y-%m-%d")
+        datetime.strptime(fecha_fin, "%Y-%m-%d")
+    except ValueError:
+        raise HTTPException(status_code=400, detail="Formato de fecha inválido. Use YYYY-MM-DD")
+    eliminados = r.delete_comprobantes_by_fechas(fecha_inicio, fecha_fin)
+    return {"eliminados": eliminados}
+
+
 @comprobante.put("/comprobante/{id}", response_model=schemas.Comprobante)
 def update_comprobante(
     id: int,

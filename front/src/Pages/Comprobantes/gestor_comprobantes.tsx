@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Table, Button, message, Upload, DatePicker, Space, Spin } from 'antd';
-import { UploadOutlined, DeleteOutlined, MoreOutlined, FormOutlined, DownloadOutlined } from "@ant-design/icons";
+import { UploadOutlined, DeleteOutlined, MoreOutlined, FormOutlined, DownloadOutlined, DeleteFilled } from "@ant-design/icons";
 import dayjs from 'dayjs';
 import '@inovua/reactdatagrid-community/index.css';
 
@@ -15,6 +15,7 @@ import ComprobantePopup from './Popup/comprobante';
 import ComprobanteEditPopup from './Popup/comprobante_edit';
 import SumaPopup from './Popup/obtener_suma';
 import DownloadComprobante from './Popup/descargar_comprobantes';
+import BorrarPorFechas from './Popup/borrar_por_fechas';
 
 interface Comprobante {
   id: number;
@@ -62,6 +63,7 @@ const GestorComprobantes: React.FC = () => {
   const [mostrarPopupComprobanteEdit, setMostrarPopupComprobanteEdit] = useState(false);
   const [mostrarPopupSuma, setMostrarPopupSuma] = useState(false);
   const [mostrarDownload, setMostrarDownload] = useState(false);
+  const [mostrarBorrarPorFechas, setMostrarBorrarPorFechas] = useState(false);
 
   useEffect(() => {
     setLoadingComprobantes(true);
@@ -332,6 +334,13 @@ const GestorComprobantes: React.FC = () => {
               open={mostrarDownload}
               onClose={() => setMostrarDownload(false)}
             />
+            <Button
+              danger
+              icon={<DeleteFilled />}
+              onClick={() => setMostrarBorrarPorFechas(true)}
+            >
+              Borrar por fechas
+            </Button>
           </div>
           <Button
             type="primary"
@@ -369,6 +378,11 @@ const GestorComprobantes: React.FC = () => {
         open={mostrarPopupSuma}
         onClose={() => setMostrarPopupSuma(false)}
         />
+      <BorrarPorFechas
+        open={mostrarBorrarPorFechas}
+        onClose={() => setMostrarBorrarPorFechas(false)}
+        onSuccess={fetchComprobantes}
+      />
     </div>
   );
 };

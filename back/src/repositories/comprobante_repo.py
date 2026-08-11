@@ -132,6 +132,25 @@ class ComprobanteRepo:
         self.db.refresh(db_comprobante)
         return db_comprobante
 
+    def delete_comprobantes_by_fechas(self, fecha_inicio: str, fecha_fin: str) -> int:
+        fecha_inicio_dt = datetime.strptime(fecha_inicio, "%Y-%m-%d")
+        fecha_fin_dt = datetime.strptime(fecha_fin, "%Y-%m-%d")
+        a_eliminar = []
+        for c in self._base_query().all():
+            try:
+                try:
+                    fecha_c = datetime.strptime(c.fecha_emision, "%Y-%m-%d")
+                except ValueError:
+                    fecha_c = datetime.strptime(c.fecha_emision, "%d/%m/%Y")
+                if fecha_inicio_dt <= fecha_c <= fecha_fin_dt:
+                    a_eliminar.append(c)
+            except Exception:
+                continue
+        for c in a_eliminar:
+            self.db.delete(c)
+        self.db.commit()
+        return len(a_eliminar)
+
     def exists_comprobante_by_numero(self, punto_venta: int, numero_desde: int, numero_hasta: int):
         return self._base_query().filter(
             Comprobante.punto_venta == punto_venta,
